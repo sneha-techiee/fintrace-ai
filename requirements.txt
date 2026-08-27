@@ -1,0 +1,15 @@
+# requirements.txt is basically our project's dependency shopping list
+# For the initial M1, we'll likely need things such as:
+
+# pandas → generating/manipulating tabular financial data but we could generate data directly into SQLite using Python/SQLAlchemy .. so pandas not a really big requirement 
+# SQLAlchemy → working with our SQLite database through Python
+# We needed persistent relational data for the synthetic financial ecosystem, and I chose SQLAlchemy to model and query those entities from Python rather than scattering raw SQL throughout the application.
+# Faker → generating realistic synthetic merchants/customers/data
+# I need to generate ~100 fake but realistic records (names, IDs, dates, amounts)." Could you hand-write random name generation yourself? Sure, but "generate realistic fake data" is such a common need that a mature, well-tested package exists for exactly this — that's why Faker, not because it's trendy.
+# networkx → temporary/local lineage graph if needed
+# later Streamlit → UI
+# later the chosen LLM SDK(anthropic )→ agent
+# later DataHub-related tooling → actual lineage integration
+
+Faker 
+
