@@ -16,7 +16,7 @@ fake.add_provider(category_provider)
 def generate_merchants(count = 4): 
     inr_count = floor(0.75*count)# defined a function where i ve taken a default argument count as 4 .. as if nobody decides to take some other number, it by default is gonna be 4 as decided in M0
     usd_count = count - inr_count
-    merchants =[]
+    merchants =[] # this we ll use in payments as well
 # count is a parameter, it represents how many merchants a caller wants.
 # count = 4, default argument
     for i in range (count):# python uses zero-based indexing, range starts from zero by default 
