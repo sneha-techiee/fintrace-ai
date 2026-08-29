@@ -54,3 +54,4 @@ class LedgerEntry: #A LedgerEntry represents what actually gets recorded in our 
     amount: Decimal
     currency: str
     timestamp: datetime
+    direction : str

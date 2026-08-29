@@ -12,13 +12,23 @@ status_categories = ["ongoing", "completed", "failed"]
 def generate_settlements(payments, count):
 
     settlements = []
+    completed_payments = [
+    payment for payment in payments
+    if payment.status == "completed"
+]
+    if not completed_payments:
+      return settlements
+
+
+    
 
     for i in range(count):
 
         settlement_id = f"settle_{i+1}"
+        selected_payment = random.choice(completed_payments)
 
         # A settlement must belong to an existing payment
-        selected_payment = random.choice(payments)
+       
 
         payment_id = selected_payment.payment_id
         merchant_id = selected_payment.merchant_id
