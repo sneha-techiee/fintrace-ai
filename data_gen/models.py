@@ -55,3 +55,23 @@ class LedgerEntry: #A LedgerEntry represents what actually gets recorded in our 
     currency: str
     timestamp: datetime
     direction : str
+
+@dataclass
+class DashboardMetric: # defining the information a dashboard result needs
+    merchant_id : str
+    revenue : Decimal
+    currency : str
+    period_start : datetime
+    period_end : datetime
+    pipeline_run_id : str
+
+@dataclass
+class Incident:
+    incident_id: str
+    merchant_id: str
+    incident_type: str
+    expected_revenue: Decimal
+    actual_revenue: Decimal
+    discrepancy: Decimal
+    currency: str
+    severity: str   

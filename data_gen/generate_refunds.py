@@ -27,7 +27,10 @@ def generate_refunds(payments, count):
         eligible_payments = [
     payment for payment in completed_payments
     if remaining_amounts[payment.payment_id] > Decimal("0.00")
+
 ]
+        if not eligible_payments:
+          break
         selected_payments = random.choice(eligible_payments)
         # proceed only is payment is already done
         payment_id = selected_payments.payment_id
