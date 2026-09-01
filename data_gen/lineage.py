@@ -1,88 +1,88 @@
 # The job of this file is:
-# Trace an incident back to the financial record that caused it.
+# Collect financial records that may be relevant to an incident.
+#
+# This file must NOT decide the root cause.
 #
 # Incident
 #    ↓
-# Refund
-#    ↓
-# Payment
+# Evidence scope
+#    ├── Payments
+#    ├── Ledger entries
+#    └── Pipeline runs (later)
 #
-# It helps us answer:
-# "Which refund caused this revenue discrepancy?"
-
-from data_gen.models import Incident, LedgerEntry
+# The AI investigator will examine this evidence
+# and determine what actually happened.
 
 
-def find_refund_for_incident(incident, ledger_entries):
+from datetime import timedelta
 
-    for entry in ledger_entries:
+LOOKBACK_WINDOW = timedelta(days=2)
 
+
+def gather_payments_in_scope(
+    incident,
+    payments,
+    period_start,
+    period_end
+):
+
+    return [
+        payment
+        for payment in payments
+        if (
+            payment.merchant_id == incident.merchant_id
+            and payment.currency == incident.currency
+            and period_start - LOOKBACK_WINDOW
+            <= payment.timestamp
+            <= period_end + LOOKBACK_WINDOW
+        )
+    ]
+
+
+def gather_ledger_entries_in_scope(
+    incident,
+    ledger_entries,
+    period_start,
+    period_end
+):
+
+    return [
+        entry
+        for entry in ledger_entries
         if (
             entry.merchant_id == incident.merchant_id
-            and entry.entry_type == "refund"
-            and entry.amount == incident.discrepancy
-        ):
-            return entry
-
-    return None
-def find_refunds_for_incident(incident, ledger_entries):
-# Give me the refund records belonging to this merchant and currency.
-    matching_refunds = []
-
-    for entry in ledger_entries:
-
-        if (
-            entry.merchant_id == incident.merchant_id
-            and entry.entry_type == "refund"
             and entry.currency == incident.currency
-        ):
-            matching_refunds.append(entry)
-
-    return matching_refunds
-
-
-def find_payment_for_refund(refund_entry, payments):
-
-    for payment in payments:
-
-        if payment.payment_id == refund_entry.payment_id:
-            return payment
-
-    return None
+            and period_start - LOOKBACK_WINDOW
+            <= entry.timestamp
+            <= period_end + LOOKBACK_WINDOW
+        )
+    ]
 
 
-def investigate_incident(incident, ledger_entries, payments):
-
-    refunds = find_refunds_for_incident(
-        incident,
-        ledger_entries
-    )
-
-    if not refunds:
-        return None
-
-    refund_entry = None
-
-    for refund in refunds:
-        if refund.amount == incident.discrepancy:
-            refund_entry = refund
-            break
-
-    if refund_entry is None:
-        return None
-
-    payment = find_payment_for_refund(
-        refund_entry,
-        payments
-    )
+def gather_evidence(
+    incident,
+    payments,
+    ledger_entries,
+    period_start,
+    period_end
+):
 
     return {
         "incident": incident,
-        "refund": refund_entry,
-        "payment": payment,
-        "root_cause": "dashboard omitted a refund"
+        "payments": gather_payments_in_scope(
+            incident,
+            payments,
+            period_start,
+            period_end
+        ),
+        "ledger_entries": gather_ledger_entries_in_scope(
+            incident,
+            ledger_entries,
+            period_start,
+            period_end
+        )
     }
-    
+
 
 if __name__ == "__main__":
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     from data_gen.generate_ledger import generate_ledger_entries
     from data_gen.calculate_ledger_truth import calculate_ledger_truth
     from data_gen.generate_dashboard_metrics import generate_dashboard_metrics
-    from data_gen.simulate_incident import simulate_missing_refund
+    from data_gen.simulate_duplicate_payment import simulate_duplicate_payment
     from data_gen.detect_incidents import detect_incidents
     from datetime import datetime
 
@@ -134,75 +134,106 @@ if __name__ == "__main__":
         period_end
     )
 
+    # target_merchant_id = None
+
+    # for entry in ledger_entries:
+
+    #     if (
+    #         entry.entry_type == "refund"
+    #         and period_start <= entry.timestamp <= period_end
+    #     ):
+    #         target_merchant_id = entry.merchant_id
+    #         break
+
+    # if target_merchant_id is None:
+    #     print("No suitable refund found. Try running again.")
+    #     exit()
+
     target_merchant_id = None
 
-    for entry in ledger_entries:
+    for payment in payments:
 
-        if (
-            entry.entry_type == "refund"
-            and period_start <= entry.timestamp <= period_end
-        ):
-            target_merchant_id = entry.merchant_id
+        if period_start <= payment.timestamp <= period_end:
+            target_merchant_id = payment.merchant_id
             break
 
-    faulty_dashboard_metrics = simulate_missing_refund(
+    if target_merchant_id is None:
+        print("No suitable payment found. Try running again.")
+        exit()
+
+    result = simulate_duplicate_payment(
         dashboard_metrics,
+        payments,
         ledger_entries,
-        target_merchant_id
+        target_merchant_id,
+        period_start,
+        period_end
     )
+
+    if result is None:
+        print(
+            f"No duplicable payment found for merchant "
+            f"{target_merchant_id}. Try running again."
+        )
+        exit()
+
+    faulty_dashboard_metrics, incident_type = result
 
     incidents = detect_incidents(
         ledger_truth,
-        faulty_dashboard_metrics
+        faulty_dashboard_metrics,
+        incident_type
     )
 
-    print("\n=== Incident Investigation ===")
+    print("\n=== Evidence Scope Test ===")
 
     for incident in incidents:
 
-        result = investigate_incident(
+        evidence = gather_evidence(
             incident,
+            payments,
             ledger_entries,
-            payments
+            period_start,
+            period_end
         )
 
-        if result is not None:
+        print(
+            f"\nIncident: {incident.incident_id}"
+        )
 
-            refund = result["refund"]
-            payment = result["payment"]
+        print(
+            f"Merchant: {incident.merchant_id}"
+        )
 
+        print(
+            f"Discrepancy: "
+            f"{incident.currency} "
+            f"{incident.discrepancy}"
+        )
+
+        print(
+            f"\nPayments in scope: "
+            f"{len(evidence['payments'])}"
+        )
+
+        for payment in evidence["payments"]:
             print(
-                f"Incident: {incident.incident_id}"
+                f"  {payment.payment_id} | "
+                f"{payment.currency} "
+                f"{payment.amount} | "
+                f"{payment.status}"
             )
 
+        print(
+            f"\nLedger entries in scope: "
+            f"{len(evidence['ledger_entries'])}"
+        )
+
+        for entry in evidence["ledger_entries"]:
             print(
-                f"Merchant: {incident.merchant_id}"
-            )
-
-            print(
-                f"Discrepancy: "
-                f"{incident.currency} "
-                f"{incident.discrepancy}"
-            )
-
-            print(
-                f"Refund: "
-                f"{refund.currency} "
-                f"{refund.amount}"
-            )
-
-            print(
-                f"Payment ID: "
-                f"{refund.payment_id}"
-            )
-
-            if payment is not None:
-
-                print(
-                    f"Original Payment: "
-                    f"{payment.currency} "
-                    f"{payment.amount}"
-                )
-                print(
-                f"Root Cause: {result['root_cause']}"
+                f"  {entry.entry_id} | "
+                f"{entry.entry_type} | "
+                f"{entry.currency} "
+                f"{entry.amount} | "
+                f"Payment: {entry.payment_id}"
             )
