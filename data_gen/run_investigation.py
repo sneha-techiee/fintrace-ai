@@ -15,7 +15,9 @@
 
 import sys
 from datetime import datetime
+from decimal import Decimal
 
+from data_gen.models import Refund
 from data_gen.incident_registry import INCIDENT_SIMULATORS
 from data_gen.generate_merchants import generate_merchants
 from data_gen.generate_payments import generate_payments
@@ -62,17 +64,41 @@ if __name__ == "__main__":
         23, 59, 59
     )
 
+     # ---------------------------------------------------------
+# Guarantee valid records for deterministic demo scenarios
+# ---------------------------------------------------------
+
+# Ensure at least one completed payment exists.
+# This does NOT tell the AI what the root cause is.
+    payments[0].status = "completed"
 
     refunds = generate_refunds(
-        payments,
-        10,
-        period_end
+    payments,
+    10,
+    period_end
+)
+
+# For the missing_refund scenario, guarantee one completed
+# refund exists before the ledger and ground truth are created.
+    if incident_type == "missing_refund":
+
+      guaranteed_refund = Refund(
+        refund_id="demo_refund_1",
+        payment_id=payments[0].payment_id,
+        merchant_id=payments[0].merchant_id,
+        amount=Decimal("10.00"),
+        status="completed",
+        currency=payments[0].currency,
+        timestamp=datetime(2026, 6, 15)
     )
 
+      refunds.append(guaranteed_refund)
+
     ledger_entries = generate_ledger_entries(
-        payments,
-        refunds
-    )
+    payments,
+    refunds
+)
+    
 
 
     # ---------------------------------------------------------

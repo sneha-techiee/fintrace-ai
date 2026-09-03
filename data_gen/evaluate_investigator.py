@@ -1,5 +1,8 @@
 import sys
-from datetime import datetime
+import json
+import os
+
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from data_gen.models import Refund
@@ -17,6 +20,38 @@ from data_gen.lineage import gather_evidence
 from data_gen.investigation_evidence import build_investigation_evidence
 from data_gen.ai_investigator import investigate_with_ai
 
+
+RESULTS_FILE = "evaluation_results.jsonl"
+
+
+def log_result(record):
+    """Append one result immediately so progress survives interruptions."""
+
+    record["logged_at"] = datetime.now(timezone.utc).isoformat()
+
+    with open(RESULTS_FILE, "a") as f:
+        f.write(json.dumps(record) + "\n")
+def load_results():
+    """Load all previously logged evaluation results."""
+
+    if not os.path.exists(RESULTS_FILE):
+        return []
+
+    results = []
+
+    with open(RESULTS_FILE, "r") as f:
+        for line in f:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            try:
+                results.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    return results
 
 def run_single_evaluation(incident_type):
 
@@ -57,7 +92,6 @@ def run_single_evaluation(incident_type):
     if incident_type == "missing_refund":
 
         completed_payment = payments[0]
-
 
         test_refund = Refund(
             refund_id="test_refund_1",
@@ -224,39 +258,71 @@ def main():
                         f"(scenario could not be generated)"
                     )
 
+                    log_result({
+                        "incident_type": incident_type,
+                        "trial": trial,
+                        "status": "skipped"
+                    })
+
                     continue
 
                 total_tests += 1
 
                 expected = result["expected"]
                 predicted = result["predicted"]
+                passed = predicted == expected
 
-                if predicted == expected:
+                if passed:
 
                     passed_tests += 1
-
-                    print(
-                        f"  Trial {trial}: PASS "
-                        f"| predicted={predicted} "
-                        f"| confidence={result['confidence']}"
-                    )
 
                 else:
 
                     failed_tests += 1
 
-                    print(
-                        f"  Trial {trial}: FAIL "
-                        f"| expected={expected} "
-                        f"| predicted={predicted} "
-                        f"| confidence={result['confidence']}"
-                    )
+                print(
+                    f"  Trial {trial}: "
+                    f"{'PASS' if passed else 'FAIL'} "
+                    f"| predicted={predicted} "
+                    f"| confidence={result['confidence']}"
+                )
+
+                log_result({
+                    "incident_type": incident_type,
+                    "expected": expected,
+                    "predicted": predicted,
+                    "confidence": result["confidence"],
+                    "incident_id": result["incident_id"],
+                    "passed": passed
+                })
 
             except Exception as e:
+
+                if "RESOURCE_EXHAUSTED" in str(e):
+
+                    log_result({
+                        "incident_type": incident_type,
+                        "trial": trial,
+                        "status": "quota_exhausted"
+                    })
+
+                    print(
+                        f"\n  Quota exhausted — stopping."
+                        f" Progress saved in {RESULTS_FILE}."
+                    )
+
+                    return
 
                 print(
                     f"  Trial {trial}: ERROR | {e}"
                 )
+
+                log_result({
+                    "incident_type": incident_type,
+                    "trial": trial,
+                    "status": "error",
+                    "error": str(e)
+                })
 
     # ---------------------------------------------------------
     # Final metrics
