@@ -13,27 +13,32 @@
 #     ↓
 # Investigation report
 
+import sys
 
+from data_gen.incident_registry import INCIDENT_SIMULATORS
 from data_gen.generate_merchants import generate_merchants
 from data_gen.generate_payments import generate_payments
 from data_gen.generate_refunds import generate_refunds
 from data_gen.generate_ledger import generate_ledger_entries
-
 from data_gen.calculate_ledger_truth import calculate_ledger_truth
 from data_gen.generate_dashboard_metrics import generate_dashboard_metrics
 
-from data_gen.simulate_duplicate_payment import simulate_duplicate_payment
-
 from data_gen.detect_incidents import detect_incidents
-
 from data_gen.lineage import gather_evidence
-
 from data_gen.investigation_evidence import build_investigation_evidence
 from data_gen.ai_investigator import investigate_with_ai
 from data_gen.investigation_report import generate_investigation_report
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) < 2:
+        raise ValueError(
+            "Please provide an incident type. "
+            "Example: python -m data_gen.run_investigation missing_refund"
+        )
+
+    incident_type = sys.argv[1]
 
     # ---------------------------------------------------------
     # 1. Generate financial data
@@ -60,21 +65,46 @@ if __name__ == "__main__":
     # 2. Select a merchant/payment for investigation
     # ---------------------------------------------------------
 
-    target_payment = next(
-        (
-            payment
-            for payment in payments
-            if payment.status == "completed"
-        ),
-        None
-    )
+    if incident_type == "missing_refund":
 
-    if target_payment is None:
-        raise RuntimeError(
-            "No completed payment available for duplicate-payment simulation."
+        target_refund = next(
+            (
+                refund
+                for refund in refunds
+                if refund.status == "completed"
+            ),
+            None
         )
 
-    target_merchant_id = target_payment.merchant_id
+        if target_refund is None:
+            raise RuntimeError(
+                "No completed refund available for missing-refund simulation."
+            )
+
+        target_merchant_id = target_refund.merchant_id
+
+    elif incident_type == "duplicate_payment":
+
+        target_payment = next(
+            (
+                payment
+                for payment in payments
+                if payment.status == "completed"
+            ),
+            None
+        )
+
+        if target_payment is None:
+            raise RuntimeError(
+                "No completed payment available for duplicate-payment simulation."
+            )
+
+        target_merchant_id = target_payment.merchant_id
+
+    else:
+        raise ValueError(
+            f"Unsupported incident type: {incident_type}"
+        )
 
     merchant_payments = [
         payment
@@ -96,10 +126,19 @@ if __name__ == "__main__":
         for payment in merchant_payments
     )
 
-    period_end = max(
-        payment.timestamp
-        for payment in merchant_payments
-    )
+    if incident_type == "missing_refund":
+
+        period_end = max(
+            target_refund.timestamp,
+            max(payment.timestamp for payment in merchant_payments)
+        )
+
+    else:
+
+        period_end = max(
+            payment.timestamp
+            for payment in merchant_payments
+        )
 
     # ---------------------------------------------------------
     # 4. Calculate clean ledger truth
@@ -116,31 +155,57 @@ if __name__ == "__main__":
     # ---------------------------------------------------------
 
     dashboard_metrics = generate_dashboard_metrics(
-    ledger_truth,
-    merchants,
-    period_start,
-    period_end
-)
+        ledger_truth,
+        merchants,
+        period_start,
+        period_end
+    )
 
     # ---------------------------------------------------------
     # 6. Inject a financial data problem
     # ---------------------------------------------------------
 
-    result = simulate_duplicate_payment(
-        dashboard_metrics,
-        payments,
-        ledger_entries,
-        target_merchant_id,
-        period_start,
-        period_end
-    )
+    simulator = INCIDENT_SIMULATORS.get(incident_type)
+
+    if simulator is None:
+        raise ValueError(
+            f"Unknown incident type: {incident_type}. "
+            f"Available types: {list(INCIDENT_SIMULATORS.keys())}"
+        )
+
+    if incident_type == "duplicate_payment":
+
+        result = simulator(
+            dashboard_metrics,
+            payments,
+            ledger_entries,
+            target_merchant_id,
+            period_start,
+            period_end
+        )
+
+    else:
+
+        result = simulator(
+            dashboard_metrics,
+            refunds,
+            ledger_entries,
+            target_merchant_id,
+            period_start,
+            period_end
+        )
 
     if result is None:
         raise RuntimeError(
-            "Could not create a duplicate-payment scenario."
+            f"Could not create a {incident_type} scenario."
         )
 
-    faulty_dashboard_metrics, incident_type = result
+    faulty_dashboard_metrics, injected_incident_type = result
+
+    if injected_incident_type is None:
+        raise RuntimeError(
+            f"Simulator could not create a {incident_type} scenario."
+        )
 
     # ---------------------------------------------------------
     # 7. Detect the incident
@@ -149,7 +214,7 @@ if __name__ == "__main__":
     incidents = detect_incidents(
         ledger_truth,
         faulty_dashboard_metrics,
-        incident_type
+        injected_incident_type
     )
 
     if not incidents:
