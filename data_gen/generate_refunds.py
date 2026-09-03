@@ -1,11 +1,12 @@
 import random
 from faker import Faker
 from decimal import Decimal
+from datetime import datetime
 from data_gen.models import Refund
 from data_gen.generate_payments import generate_payments
 from data_gen.generate_merchants import generate_merchants 
 status_categories = ["ongoing", "completed", "failed"]
-def generate_refunds(payments, count):
+def generate_refunds(payments, count, period_end):
     fake = Faker()
     refunds =[]
     completed_payments = [
@@ -48,8 +49,10 @@ def generate_refunds(payments, count):
         ## random.uniform() performs float-based arithmetic internally, so its inputs must be floats; Decimal + Decimal is valid in normal arithmetic, but cannot be used directly with uniform().
         currency = selected_payments.currency
         status = random.choice(status_categories)
-        timestamp = fake.date_time_between(start_date= selected_payments.timestamp,
-                                               end_date="now")
+        timestamp = fake.date_time_between(
+           start_date=selected_payments.timestamp,
+           end_date=period_end
+)
 # timestamp of refund is normally after the payment and current time for now
         refund = Refund(
         refund_id = refund_id,
@@ -65,7 +68,14 @@ def generate_refunds(payments, count):
 if __name__ == "__main__":
     merchants = generate_merchants(7)
     payments = generate_payments(merchants, 17)
-    refunds = generate_refunds(payments, 10)
+
+    period_end = datetime(2026, 6, 30, 23, 59, 59)
+
+    refunds = generate_refunds(
+        payments,
+        10,
+        period_end
+    )
 
     for r in refunds:
         print(

@@ -171,6 +171,15 @@ Follow this reasoning process:
 
 12. If the evidence is insufficient, say that the root cause
     cannot be determined reliably.
+13. The root_cause_category must be a machine-checkable category for the identified root cause.
+
+Allowed categories:
+- duplicate_payment
+- missing_refund
+- insufficient_evidence
+- other
+
+Use insufficient_evidence when the available evidence does not support a specific root cause with reasonable confidence.
 
 ==================================================
 EVIDENCE REQUIREMENTS
@@ -247,6 +256,7 @@ EXPECTED JSON
     "discrepancy": "string",
     "currency": "string",
     "severity": "string",
+    "root_cause_category": "duplicate_payment | missing_refund | insufficient_evidence | other",
     "root_cause": "string",
     "explanation": "string",
     "evidence": ["string"],

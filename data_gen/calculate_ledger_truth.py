@@ -49,14 +49,28 @@ if __name__ == "__main__":
 
     payments = generate_payments(merchants, 17)
 
-    refunds = generate_refunds(payments, 10)
+    period_start = datetime(2026, 6, 1)
 
-    ledger_entries = generate_ledger_entries(payments, refunds)
+    period_end = datetime(
+    2026, 6, 30,
+    23, 59, 59
+)
+
+    refunds = generate_refunds(
+    payments,
+    10,
+    period_end
+)
+
+    ledger_entries = generate_ledger_entries(
+    payments,
+    refunds
+)
     period_start = datetime(2026, 6, 1)
     period_end = datetime(2026, 6, 30, 23, 59, 59)
     merchant_totals = calculate_ledger_truth(ledger_entries, period_start, period_end)
 
     for merchant_id, total in merchant_totals.items():
-        print(f"{merchant_id} | Ledger Truth: {total}")
+       print(f"{merchant_id} | Ledger Truth: {total}")
 
     

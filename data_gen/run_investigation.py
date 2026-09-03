@@ -14,6 +14,7 @@
 # Investigation report
 
 import sys
+from datetime import datetime
 
 from data_gen.incident_registry import INCIDENT_SIMULATORS
 from data_gen.generate_merchants import generate_merchants
@@ -50,10 +51,22 @@ if __name__ == "__main__":
         merchants,
         20
     )
+    # ---------------------------------------------------------
+    # 2. Define investigation period
+    # ---------------------------------------------------------
+
+    period_start = datetime(2026, 6, 1)
+
+    period_end = datetime(
+        2026, 6, 30,
+        23, 59, 59
+    )
+
 
     refunds = generate_refunds(
         payments,
-        10
+        10,
+        period_end
     )
 
     ledger_entries = generate_ledger_entries(
@@ -61,87 +74,9 @@ if __name__ == "__main__":
         refunds
     )
 
-    # ---------------------------------------------------------
-    # 2. Select a merchant/payment for investigation
-    # ---------------------------------------------------------
-
-    if incident_type == "missing_refund":
-
-        target_refund = next(
-            (
-                refund
-                for refund in refunds
-                if refund.status == "completed"
-            ),
-            None
-        )
-
-        if target_refund is None:
-            raise RuntimeError(
-                "No completed refund available for missing-refund simulation."
-            )
-
-        target_merchant_id = target_refund.merchant_id
-
-    elif incident_type == "duplicate_payment":
-
-        target_payment = next(
-            (
-                payment
-                for payment in payments
-                if payment.status == "completed"
-            ),
-            None
-        )
-
-        if target_payment is None:
-            raise RuntimeError(
-                "No completed payment available for duplicate-payment simulation."
-            )
-
-        target_merchant_id = target_payment.merchant_id
-
-    else:
-        raise ValueError(
-            f"Unsupported incident type: {incident_type}"
-        )
-
-    merchant_payments = [
-        payment
-        for payment in payments
-        if payment.merchant_id == target_merchant_id
-    ]
-
-    if not merchant_payments:
-        raise RuntimeError(
-            "No payments found for the selected merchant."
-        )
 
     # ---------------------------------------------------------
-    # 3. Define investigation period
-    # ---------------------------------------------------------
-
-    period_start = min(
-        payment.timestamp
-        for payment in merchant_payments
-    )
-
-    if incident_type == "missing_refund":
-
-        period_end = max(
-            target_refund.timestamp,
-            max(payment.timestamp for payment in merchant_payments)
-        )
-
-    else:
-
-        period_end = max(
-            payment.timestamp
-            for payment in merchant_payments
-        )
-
-    # ---------------------------------------------------------
-    # 4. Calculate clean ledger truth
+    # 3. Calculate clean ledger truth
     # ---------------------------------------------------------
 
     ledger_truth = calculate_ledger_truth(
@@ -151,7 +86,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 5. Generate the clean dashboard
+    # 4. Generate the clean dashboard
     # ---------------------------------------------------------
 
     dashboard_metrics = generate_dashboard_metrics(
@@ -162,7 +97,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 6. Inject a financial data problem
+    # 5. Inject a financial data problem
     # ---------------------------------------------------------
 
     simulator = INCIDENT_SIMULATORS.get(incident_type)
@@ -173,34 +108,20 @@ if __name__ == "__main__":
             f"Available types: {list(INCIDENT_SIMULATORS.keys())}"
         )
 
-    if incident_type == "duplicate_payment":
+    faulty_dashboard_metrics, injected_incident_type = simulator(
+        dashboard_metrics,
+        merchants,
+        payments,
+        refunds,
+        ledger_entries,
+        period_start,
+        period_end
+    )
 
-        result = simulator(
-            dashboard_metrics,
-            payments,
-            ledger_entries,
-            target_merchant_id,
-            period_start,
-            period_end
-        )
-
-    else:
-
-        result = simulator(
-            dashboard_metrics,
-            refunds,
-            ledger_entries,
-            target_merchant_id,
-            period_start,
-            period_end
-        )
-
-    if result is None:
+    if faulty_dashboard_metrics is None:
         raise RuntimeError(
             f"Could not create a {incident_type} scenario."
         )
-
-    faulty_dashboard_metrics, injected_incident_type = result
 
     if injected_incident_type is None:
         raise RuntimeError(
@@ -208,7 +129,7 @@ if __name__ == "__main__":
         )
 
     # ---------------------------------------------------------
-    # 7. Detect the incident
+    # 6. Detect the incident
     # ---------------------------------------------------------
 
     incidents = detect_incidents(
@@ -225,7 +146,7 @@ if __name__ == "__main__":
     incident = incidents[0]
 
     # ---------------------------------------------------------
-    # 8. Collect investigation evidence
+    # 7. Collect investigation evidence
     # ---------------------------------------------------------
 
     evidence = gather_evidence(
@@ -237,7 +158,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 9. Structure evidence for the AI
+    # 8. Structure evidence for the AI
     # ---------------------------------------------------------
 
     structured_evidence = build_investigation_evidence(
@@ -245,7 +166,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 10. Ask AI to investigate
+    # 9. Ask AI to investigate
     # ---------------------------------------------------------
 
     ai_result = investigate_with_ai(
@@ -253,7 +174,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 11. Generate final investigation report
+    # 10. Generate final investigation report
     # ---------------------------------------------------------
 
     report = generate_investigation_report(
@@ -261,7 +182,7 @@ if __name__ == "__main__":
     )
 
     # ---------------------------------------------------------
-    # 12. Display the result
+    # 11. Display the result
     # ---------------------------------------------------------
 
     print("\n=== FINTRACE AI INVESTIGATION ===")
