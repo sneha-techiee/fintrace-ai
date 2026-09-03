@@ -1,36 +1,30 @@
 # The job of this file is:
-# Convert investigation evidence into a clear investigation report.
+# Convert the AI investigator's conclusion into a clear investigation report.
 #
 # Evidence
 #    ↓
+# AI Investigator
+#    ↓
 # Investigation Report
 #
-# The report explains:
-# - What went wrong
-# - Which merchant was affected
-# - Which refund caused the discrepancy
-# - Which payment was connected to that refund
-# - What the likely root cause is
+# IMPORTANT:
+# This file does NOT determine the root cause.
+# The root cause must come from the AI investigator.
 
-def generate_investigation_report(evidence):
 
-    incident = evidence["incident"]
-    refund = evidence["refund"]
-    payment = evidence["payment"]
+def generate_investigation_report(ai_result):
 
     report = {
-        "incident_id": incident["incident_id"],
-        "merchant_id": incident["merchant_id"],
-        "discrepancy": incident["discrepancy"],
-        "currency": incident["currency"],
-        "severity": incident["severity"],
+        "incident_id": ai_result["incident_id"],
+        "merchant_id": ai_result["merchant_id"],
+        "discrepancy": ai_result["discrepancy"],
+        "currency": ai_result["currency"],
+        "severity": ai_result["severity"],
 
-        "refund_amount": refund["amount"],
-        "payment_id": payment["payment_id"],
-        "original_payment_amount": payment["amount"],
-
-        "root_cause": "Dashboard omitted a refund"
+        "root_cause": ai_result["root_cause"],
+        "explanation": ai_result["explanation"],
+        "evidence": ai_result["evidence"],
+        "confidence": ai_result["confidence"]
     }
 
     return report
-
