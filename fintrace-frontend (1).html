@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinTrace AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1013;
+    --ink-2:#12161A;
+    --paper:#ECE7DC;
+    --paper-dim:rgba(236,231,220,0.62);
+    --paper-faint:rgba(236,231,220,0.34);
+    --hair:rgba(236,231,220,0.12);
+    --hair-strong:rgba(236,231,220,0.22);
+    --ochre:#C98D3C;
+    --ochre-dim:rgba(201,141,60,0.16);
+    --green:#5C9174;
+    --green-dim:rgba(92,145,116,0.16);
+    --slate:#7C93A3;
+    --atmosphere-image:url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2400&q=90");
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow-x:hidden;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(8,11,14,.88), rgba(8,11,14,.92)),
+      var(--atmosphere-image);
+    background-size:cover; background-position:center; opacity:.32;
+  }
+  .env-grain{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background-image:radial-gradient(ellipse at 20% 0%, rgba(124,147,163,0.07), transparent 60%),
+                      radial-gradient(ellipse at 90% 100%, rgba(201,141,60,0.06), transparent 55%);
+    animation:envdrift 26s ease-in-out infinite alternate;
+  }
+  @keyframes envdrift{
+    0%{ background-position: 0% 0%, 0% 0%; }
+    100%{ background-position: 4% 3%, -4% -3%; }
+  }
+  .scene{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; visibility:hidden;
+    transform:translateY(14px);
+    transition:opacity .55s cubic-bezier(.22,.61,.36,1), transform .55s cubic-bezier(.22,.61,.36,1), visibility 0s .55s;
+    padding:56px clamp(24px,6vw,96px);
+    z-index:2;
+  }
+  .scene.active{
+    opacity:1; visibility:visible; transform:translateY(0);
+    transition:opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1), visibility 0s;
+  }
+  .scene-inner{ max-width:1080px; width:100%; min-width:0; margin:0 auto; flex:1; display:flex; flex-direction:column; }
+  #scene-investigate{ overflow-y:auto; overscroll-behavior-y:contain; }
+  #scene-investigate .scene-inner{ flex:none; min-height:100%; padding-bottom:56px; }
+
+  .topnav{
+    position:fixed; top:0; left:0; right:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px clamp(24px,6vw,96px);
+    pointer-events:none;
+  }
+  .brand{
+    font-family:var(--serif); font-size:17px; font-weight:500;
+    letter-spacing:0.02em; color:var(--paper); pointer-events:auto;
+  }
+  .brand span{color:var(--ochre);}
+  .navdots{ display:flex; align-items:center; gap:clamp(10px,1.7vw,22px); min-width:0; pointer-events:auto; }
+  .navdot{
+    position:relative; width:auto; height:auto; padding:4px 0;
+    border:0; background:none; color:var(--paper-faint); cursor:pointer;
+    font-family:var(--mono); font-size:10px; letter-spacing:.045em;
+    white-space:nowrap; transition:color .25s ease, opacity .25s ease;
+  }
+  .navdot::after{
+    content:''; position:absolute; left:0; bottom:0; width:0; height:1px;
+    background:var(--ochre); transition:width .3s ease;
+  }
+  .navdot:hover{ color:var(--paper); }
+  .navdot.on{ color:var(--paper); }
+  .navdot.on::after{ width:100%; }
+  .navdot.locked{ opacity:.42; }
+  .scene-rail{
+    position:fixed; right:clamp(24px,2.6vw,44px); top:50%; transform:translateY(-50%);
+    z-index:11; display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .scene-rail::before{
+    content:''; position:absolute; top:10px; bottom:10px; width:1px; background:var(--hair);
+  }
+  .scene-rail-button{
+    position:relative; z-index:1; width:22px; height:22px; border:0; background:var(--ink);
+    color:var(--paper-faint); font-family:var(--mono); font-size:8px; cursor:pointer;
+    transition:color .2s ease, background .2s ease;
+  }
+  .scene-rail-button:hover{ color:var(--paper); }
+  .scene-rail-button.on{ color:var(--ink); background:var(--ochre); }
+  .scene-rail-button.locked{ opacity:.35; }
+
+  @media(max-width:940px){
+    .navdots{ gap:9px; }
+    .navdot{
+      font-size:0; width:16px; height:16px;
+      border:1px solid var(--hair-strong); border-radius:50%;
+    }
+    .navdot.on{ background:var(--ochre); border-color:var(--ochre); }
+    .navdot::after{ display:none; }
+    .scene-rail{ display:none; }
+  }
+
+  .hero-eyebrow{ font-family:var(--mono); font-size:12px; color:var(--paper-faint); letter-spacing:0.06em; margin-bottom:24px; }
+
+  /* ===== HERO ===== */
+  #scene-hero {
+    position: fixed; inset: 0; overflow: hidden; background: #090b0d;
+  }
+  #scene-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(90deg, rgba(7,9,11,0.92) 0%, rgba(7,9,11,0.78) 28%, rgba(7,9,11,0.35) 58%, rgba(7,9,11,0.42) 100%),
+      linear-gradient(0deg, rgba(7,9,11,0.82) 0%, rgba(7,9,11,0.08) 42%, rgba(7,9,11,0.28) 100%),
+      radial-gradient(ellipse at 30% 20%, rgba(124,147,163,0.14), transparent 55%),
+      radial-gradient(ellipse at 80% 85%, rgba(201,141,60,0.12), transparent 55%),
+      var(--atmosphere-image);
+    background-size: cover; background-position: center;
+    transform: scale(1.035);
+    animation: heroAtmosphere 18s ease-in-out infinite alternate;
+  }
+  @keyframes heroAtmosphere { from{ transform: scale(1.035);} to{ transform: scale(1.065);} }
+  #scene-hero::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+  }
+  #scene-hero .scene-inner { position: relative; z-index: 3; width: 100%; height: 100%; padding: 0; }
+
+  #scene-hero .hero-editorial {
+    position: absolute; left: clamp(48px, 10vw, 150px); top: 50%; transform: translateY(-46%);
+    width: min(720px, 52vw); display: flex; flex-direction: column; align-items: flex-start;
+  }
+  #scene-hero .hero-kicker {
+    margin-bottom: 27px; font-family: var(--mono); font-size: 9px; font-weight: 500;
+    letter-spacing: 0.25em; text-transform: uppercase; color: rgba(236,231,220,0.63);
+    opacity: 0; animation: heroReveal 900ms 250ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  #scene-hero .hero-headline {
+    margin: 0; font-family: var(--serif); font-size: clamp(58px, 7vw, 105px);
+    font-weight: 400; line-height: 0.91; letter-spacing: -0.03em; color: #f0eadf;
+    opacity: 0; animation: heroReveal 1100ms 400ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  #scene-hero .hero-headline em {
+    display: block; color: #d49a48; font-style: italic; padding-left: clamp(28px, 4vw, 65px);
+  }
+  #scene-hero .hero-quote {
+    margin: 31px 0 0; max-width: 475px; font-family: var(--serif);
+    font-size: clamp(19px, 2vw, 27px); line-height: 1.28; color: rgba(240,234,223,0.88);
+    opacity: 0; animation: heroReveal 1000ms 650ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  #scene-hero .hero-description {
+    margin: 18px 0 0; max-width: 450px; font-family: var(--sans); font-size: 13px;
+    line-height: 1.7; color: rgba(210,215,217,0.63);
+    opacity: 0; animation: heroReveal 900ms 800ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  #scene-hero .hero-enter {
+    margin-top: 31px; display: inline-flex; align-items: center; gap: 24px;
+    padding: 13px 0; border: 0; border-bottom: 1px solid rgba(236,231,220,0.38);
+    background: transparent; font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; color: #eee8dd; cursor: pointer;
+    transition: color 250ms ease, border-color 250ms ease, gap 250ms ease;
+    opacity: 0; animation: heroReveal 900ms 950ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  #scene-hero .hero-enter:hover { color: #d49a48; border-color: #d49a48; gap: 32px; }
+  #scene-hero .hero-enter-arrow { font-size: 16px; line-height: 1; }
+
+  #scene-hero .hero-system {
+    position: absolute; right: clamp(42px, 7vw, 105px); top: 50%; transform: translateY(-50%);
+    width: min(270px, 22vw); opacity: 0; animation: systemReveal 1400ms 1100ms ease forwards;
+  }
+  #scene-hero .system-heading {
+    margin-bottom: 18px; font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(236,231,220,0.42);
+  }
+  #scene-hero .system-card {
+    position: relative; padding: 16px 0;
+    border-top: 1px solid rgba(236,231,220,0.13); border-bottom: 1px solid rgba(236,231,220,0.08);
+  }
+  #scene-hero .system-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 7px 0;
+    font-family: var(--mono); font-size: 8px; letter-spacing: 0.06em; color: rgba(236,231,220,0.43);
+  }
+  #scene-hero .system-row span:last-child { color: rgba(236,231,220,0.22); }
+  #scene-hero .system-row.alert { color: rgba(212,154,72,0.8); }
+  #scene-hero .system-row.alert span:last-child { color: rgba(212,154,72,0.8); }
+  #scene-hero .system-line {
+    position: absolute; left: 0; top: 50%; width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,154,72,0.4), transparent);
+    animation: systemScan 4s ease-in-out infinite;
+  }
+  @keyframes systemScan {
+    0%,100%{ transform: translateY(-35px); opacity: 0; }
+    25%{ opacity: 0.7; } 50%{ transform: translateY(35px); opacity: 0.2; } 75%{ opacity: 0.7; }
+  }
+  #scene-hero .hero-bottom-left {
+    position: absolute; left: clamp(48px, 5vw, 75px); bottom: 29px;
+    font-family: var(--mono); font-size: 8px; letter-spacing: 0.17em; text-transform: uppercase;
+    color: rgba(236,231,220,0.38);
+  }
+  #scene-hero .hero-bottom-left span { color: rgba(212,154,72,0.8); }
+  #scene-hero .hero-scroll {
+    position: absolute; left: 50%; bottom: 25px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0; animation: heroReveal 900ms 1200ms ease forwards;
+    cursor: pointer;
+  }
+  #scene-hero .hero-scroll-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.3em; color: rgba(236,231,220,0.65); }
+  #scene-hero .hero-scroll-line { position: relative; width: 1px; height: 34px; background: rgba(236,231,220,0.16); overflow: hidden; }
+  #scene-hero .hero-scroll-line::after {
+    content: ""; position: absolute; top: -100%; left: 0; width: 1px; height: 45%;
+    background: #d49a48; animation: scrollPulse 2.1s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%{ transform: translateY(0); opacity: 0; } 25%{ opacity: 1; } 75%{ opacity: 1; }
+    100%{ transform: translateY(310%); opacity: 0; }
+  }
+  @keyframes heroReveal { from{ opacity: 0; transform: translateY(18px);} to{ opacity: 1; transform: translateY(0);} }
+  @keyframes systemReveal { from{ opacity: 0; transform: translate(18px,-50%);} to{ opacity: 1; transform: translate(0,-50%);} }
+
+  @media (max-width: 850px) {
+    #scene-hero .hero-editorial { left: 30px; right: 30px; top: 47%; width: auto; }
+    #scene-hero .hero-headline { font-size: clamp(53px, 14vw, 82px); }
+    #scene-hero .hero-headline em { padding-left: 20px; }
+    #scene-hero .hero-system { display: none; }
+    #scene-hero .hero-bottom-left { display: none; }
+    #scene-hero .hero-scroll { bottom: 20px; }
+  }
+  @media (max-height:800px) and (min-width:851px) {
+    #scene-hero .hero-editorial { top:47%; }
+    #scene-hero .hero-quote { margin-top:20px; }
+    #scene-hero .hero-description { margin-top:12px; }
+    #scene-hero .hero-enter { margin-top:20px; }
+    #scene-hero .hero-bottom-left,
+    #scene-hero .hero-scroll { display:none; }
+  }
+
+  /* ===== INCIDENT QUEUE (Command Center) ===== */
+  .cc-toolbar{ display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:22px; border-bottom:1px solid var(--hair); }
+  .cc-context{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:10px; color:var(--paper-faint); letter-spacing:.07em; line-height:1.5; }
+  .context-dot{ width:4px; height:4px; border-radius:50%; background:var(--green); }
+  .cc-period{ display:flex; flex-direction:column; align-items:flex-end; gap:5px; font-family:var(--mono); }
+  .period-label{ font-size:9px; color:var(--paper-faint); letter-spacing:.08em; }
+  #cc-period{ font-size:12px; color:var(--paper); }
+  .cc-summary{ display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--hair); }
+  .summary-card{ padding:24px 26px 24px 0; border-right:1px solid var(--hair); }
+  .summary-card:not(:first-child){ padding-left:26px; }
+  .summary-card:last-child{ border-right:0; }
+  .summary-label{ font-family:var(--mono); font-size:9px; letter-spacing:.07em; color:var(--paper-faint); margin-bottom:9px; }
+  .summary-value{ font-family:var(--serif); font-size:34px; line-height:1.12; color:var(--paper); }
+  #cc-impact{ font-size:clamp(20px,2.3vw,30px); letter-spacing:.01em; white-space:normal; }
+  .summary-value.alert{ color:var(--ochre); }
+  .summary-value.state{ font-family:var(--mono); font-size:19px; letter-spacing:.04em; color:var(--green); }
+  .summary-note{ margin-top:8px; font-size:11px; color:var(--paper-faint); }
+  .queue-head{ display:flex; justify-content:space-between; align-items:flex-end; padding:28px 0 15px; }
+  .queue-title{ font-family:var(--serif); font-size:21px; color:var(--paper); }
+  .queue-sub{ margin-top:5px; font-size:11px; color:var(--paper-faint); }
+  .queue-hint{ font-family:var(--mono); font-size:9px; color:var(--paper-faint); letter-spacing:.08em; }
+  .incident-list{ display:flex; flex-direction:column; overflow-y:auto; flex:1; min-height:0; }
+  .incident-row{
+    display:grid; grid-template-columns:90px minmax(180px,1fr) 150px 145px 82px 30px;
+    align-items:center; gap:18px; min-height:64px; padding:12px 4px; border-top:1px solid var(--hair);
+    cursor:pointer; transition:background .25s ease, padding-left .25s ease, border-color .25s ease;
+  }
+  .incident-row:last-child{ border-bottom:1px solid var(--hair); }
+  .incident-row:hover{ background:rgba(236,231,220,.035); padding-left:10px; border-top-color:var(--hair-strong); }
+  .inc-id{ font-family:var(--mono); font-size:10px; color:var(--paper-faint); overflow-wrap:anywhere; }
+  .inc-title{ font-size:13px; color:var(--paper); overflow-wrap:anywhere; }
+  .inc-merchant{ font-size:11px; color:var(--paper-dim); overflow-wrap:anywhere; }
+  .inc-amount{ font-family:var(--mono); font-size:12px; color:var(--ochre); text-align:right; }
+  .sev-badge{ font-family:var(--mono); font-size:9px; letter-spacing:.06em; padding:5px 8px; border-radius:2px; width:fit-content; justify-self:end; }
+  .sev-high{ background:var(--ochre-dim); color:var(--ochre); }
+  .inc-arrow{ font-size:16px; color:var(--paper-faint); transition:transform .25s ease, color .25s ease; }
+  .incident-row:hover .inc-arrow{ transform:translateX(4px); color:var(--ochre); }
+  .cc-footer{ display:flex; align-items:center; gap:11px; padding-top:15px; font-family:var(--mono); font-size:9px; letter-spacing:.08em; color:var(--paper-faint); }
+  .cc-footer span:nth-child(even){ color:var(--hair-strong); }
+
+  @media(max-width:900px){
+    .incident-row{ grid-template-columns:70px 1fr 110px 90px 25px; }
+    .inc-merchant{ display:none; }
+  }
+  @media(max-width:650px){
+    .cc-toolbar{ gap:20px; }
+    .cc-period{ display:none; }
+    .cc-summary{ grid-template-columns:1fr 1fr; }
+    .summary-card:last-child{ grid-column:1 / -1; border-top:1px solid var(--hair); padding-left:0; }
+    .incident-row{ grid-template-columns:65px 1fr 85px 20px; }
+    .inc-amount{ font-size:10px; }
+    .sev-badge{ display:none; }
+    .cc-footer{ display:none; }
+  }
+
+  /* ===== INCIDENT DETAIL ===== */
+  .id-meta{ display:flex; gap:12px 28px; flex-wrap:wrap; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--paper-faint); margin-bottom:20px; }
+  .compare-block{ display:flex; align-items:center; gap:40px; margin:46px 0; flex-wrap:wrap; }
+  .compare-col{ text-align:left; }
+  .compare-label{ font-family:var(--mono); font-size:11px; color:var(--paper-faint); letter-spacing:0.05em; margin-bottom:10px; }
+  .compare-value{ font-family:var(--serif); font-size:clamp(29px,3.8vw,42px); line-height:1.12; color:var(--paper); }
+  .compare-value.verified{ color:var(--green); }
+  .compare-value.reported{ color:var(--paper); }
+  .compare-arrow{ font-size:20px; color:var(--paper-faint); }
+  .discrepancy-block{ border-top:1px solid var(--hair-strong); padding-top:27px; margin-top:8px; }
+  .disc-label{ font-family:var(--mono); font-size:11px; color:var(--paper-faint); letter-spacing:0.05em; margin-bottom:10px; }
+  .disc-value{ font-family:var(--serif); font-size:clamp(43px,6.4vw,76px); color:var(--ochre); line-height:1.04; }
+  .scene-cta{
+    margin-top:auto; align-self:flex-start; background:var(--ochre); border:none; color:var(--ink);
+    font-family:var(--sans); font-size:14px; font-weight:600; padding:16px 30px; border-radius:2px; cursor:pointer;
+    transition:opacity .2s ease;
+  }
+  .scene-cta:hover{ opacity:.88; }
+  .scene-cta.ghost{ background:none; border:1px solid var(--hair-strong); color:var(--paper); margin-left:14px; }
+  .cta-row{ display:flex; margin-top:auto; padding-top:24px; }
+
+  /* ===== INVESTIGATION ===== */
+  .inv-grid{ display:grid; grid-template-columns:minmax(250px, .78fr) minmax(0, 1.22fr); gap:clamp(34px,6vw,72px); align-items:start; }
+  .inv-support{ min-width:0; }
+  .inv-section-label{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--paper-faint); margin:8px 0 12px; }
+  .checklist{ display:flex; flex-direction:column; gap:0; padding-top:0; }
+  .check-item{ display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--hair); opacity:.3; transition:opacity .4s ease; }
+  .check-item.done{ opacity:1; }
+  .check-item.active{ opacity:1; }
+  .check-mark{
+    width:18px; height:18px; border-radius:50%; border:1px solid var(--hair-strong);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:10px; color:var(--green);
+  }
+  .check-item.done .check-mark{ border-color:var(--green); }
+  .check-item.active .check-mark{ border-color:var(--ochre); }
+  .pulse{ width:6px; height:6px; border-radius:50%; background:var(--ochre); animation:pulse 1.2s infinite ease-in-out; }
+  @keyframes pulse{ 0%,100%{opacity:.3;} 50%{opacity:1;} }
+  .check-text{ font-size:13px; color:var(--paper-dim); }
+  .check-item.done .check-text{ color:var(--paper); }
+  .inv-right{ min-width:0; padding-right:8px; }
+  .evidence-trail{ display:flex; flex-direction:column; gap:0; margin:30px 0 0; }
+  .trail-node{
+    padding:16px 0; border-left:1px solid var(--hair-strong); padding-left:22px; position:relative;
+    opacity:0; transform:translateX(-8px); transition:all .45s ease;
+  }
+  .trail-node.show{ opacity:1; transform:translateX(0); }
+  .trail-node::before{
+    content:''; position:absolute; left:-4px; top:22px; width:7px; height:7px; border-radius:50%;
+    background:var(--ink); border:1px solid var(--slate);
+  }
+  .trail-label{ font-family:var(--mono); font-size:10px; color:var(--slate); letter-spacing:0.05em; margin-bottom:6px;}
+  .trail-detail{ font-size:13px; color:var(--paper-dim); font-family:var(--mono); line-height:1.7; overflow-wrap:anywhere;}
+  .ai-result{ border-top:1px solid var(--hair-strong); padding-top:28px; margin-top:8px; opacity:0; transform:translateY(10px); transition:all .6s ease; }
+  .ai-result.show{ opacity:1; transform:translateY(0); }
+  .ai-eyebrow{ font-family:var(--mono); font-size:10px; color:var(--paper-faint); letter-spacing:.1em; margin-bottom:14px;}
+  .ai-cause{ font-family:var(--serif); font-size:clamp(24px,3.2vw,32px); color:var(--paper); margin-bottom:18px; }
+  .conf-row{ display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+  .conf-bar{ width:120px; height:3px; background:var(--hair); border-radius:2px; overflow:hidden;}
+  .conf-fill{ height:100%; background:var(--green); }
+  .conf-text{ font-family:var(--mono); font-size:12px; color:var(--green); }
+  .ai-explain{ font-size:14px; line-height:1.75; color:var(--paper-dim); max-width:600px; margin-bottom:24px; }
+  .support-list{ display:flex; flex-direction:column; gap:8px; }
+  .support-item{ font-size:13px; color:var(--paper-dim); padding-left:16px; position:relative; overflow-wrap:anywhere; }
+  .support-item::before{ content:'—'; position:absolute; left:0; color:var(--paper-faint); }
+
+  /* ===== IMPACT + RECOMMENDATION ===== */
+  .impact-hero{ text-align:left; margin-bottom:48px; }
+  .impact-label{ font-family:var(--mono); font-size:12px; color:var(--paper-faint); letter-spacing:0.05em; margin-bottom:12px; }
+  .impact-num{ font-family:var(--serif); font-size:clamp(64px,10vw,120px); color:var(--ochre); line-height:0.95; }
+  .impact-sub{ display:flex; gap:40px; margin-top:24px; }
+  .impact-mini{ font-size:13px; color:var(--paper-dim); }
+  .impact-mini b{ color:var(--paper); font-family:var(--mono); font-weight:400; }
+  .rec-block{ border-top:1px solid var(--hair-strong); padding-top:36px; margin-top:auto; }
+  .rec-label{ font-family:var(--mono); font-size:11px; color:var(--paper-faint); letter-spacing:0.05em; margin-bottom:14px;}
+  .rec-text{ font-size:18px; color:var(--paper); max-width:600px; line-height:1.5; margin-bottom:22px; font-family:var(--serif); }
+  .flag-row{ display:flex; gap:28px; margin-bottom:32px; flex-wrap:wrap; }
+  .flag{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--paper-dim); font-family:var(--mono); }
+  .flag-dot{ width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .approval-row{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .btn-approve{ background:var(--green); color:var(--ink); border:none; font-family:var(--sans); font-weight:600; font-size:14px; padding:15px 28px; border-radius:2px; cursor:pointer; }
+  .btn-review{ background:none; border:1px solid var(--hair-strong); color:var(--paper); font-family:var(--sans); font-size:14px; padding:15px 28px; border-radius:2px; cursor:pointer; }
+  .audit-log{ margin-top:28px; font-family:var(--mono); font-size:12px; color:var(--paper-faint); display:none; }
+  .audit-log.show{ display:block; }
+  .audit-log div{ padding:4px 0; }
+  .audit-log b{ color:var(--green); }
+  .review-state{ border-left:2px solid var(--ochre); padding:2px 0 2px 14px; max-width:680px; }
+  .review-state strong{ display:block; color:var(--ochre); font-size:10px; letter-spacing:.08em; margin-bottom:8px; }
+  .review-status{ font-family:var(--mono); font-size:10px; letter-spacing:.07em; color:var(--paper-faint); margin:12px 0 20px; }
+  .review-section{ margin-top:18px; }
+  .review-section-label{ color:var(--paper-faint); font-size:10px; letter-spacing:.08em; margin-bottom:8px; }
+  .review-check{ color:var(--paper-dim); line-height:1.7; }
+  .review-check::before{ content:'✓'; color:var(--green); margin-right:8px; }
+  .review-proposal{ color:var(--paper); font-family:var(--serif); font-size:17px; line-height:1.5; }
+  .review-actions{ display:flex; gap:14px; flex-wrap:wrap; margin-top:18px; }
+  .review-link{ border:0; border-bottom:1px solid var(--hair-strong); background:transparent; color:var(--paper); cursor:pointer; font-family:var(--mono); font-size:10px; letter-spacing:.04em; padding:0 0 5px; }
+  .backend-note{ margin-top:14px; font-family:var(--mono); font-size:10.5px; color:var(--paper-faint); border-left:2px solid var(--hair-strong); padding-left:10px; }
+
+  /* ===== EVALUATION ===== */
+  .eval-top{ display:flex; align-items:baseline; gap:20px; margin-bottom:48px; flex-wrap:wrap; }
+  .eval-acc{ font-family:var(--serif); font-size:clamp(56px,8vw,88px); color:var(--paper); }
+  .eval-acc-label{ font-family:var(--mono); font-size:12px; color:var(--paper-faint); }
+  .eval-sample{ margin-top:8px; font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--ochre); }
+  .eval-breakdown{ display:flex; flex-direction:column; margin-bottom:40px; }
+  .eval-row{ display:grid; grid-template-columns:1fr 140px 200px; align-items:center; padding:18px 0; border-top:1px solid var(--hair); gap:16px; }
+  .eval-row:last-child{ border-bottom:1px solid var(--hair); }
+  .eval-type{ font-size:14px; color:var(--paper); }
+  .eval-score{ font-family:var(--mono); font-size:13px; color:var(--paper-dim); }
+  .eval-track{ height:3px; background:var(--hair); border-radius:2px; overflow:hidden; }
+  .eval-fill{ height:100%; background:var(--green); }
+  .eval-note{ font-family:var(--mono); font-size:12px; color:var(--paper-faint); max-width:560px; line-height:1.7; border-top:1px solid var(--hair-strong); padding-top:24px; }
+  .eval-caveat{ margin-top:12px; max-width:560px; font-size:12px; line-height:1.65; color:var(--paper-dim); }
+
+  .empty-state{ padding:80px 4px; max-width:460px; }
+  .empty-title{ font-family:var(--serif); font-size:24px; color:var(--paper); margin-bottom:14px; }
+  .empty-body{ font-size:14px; line-height:1.75; color:var(--paper-dim); }
+  .empty-body code{ font-family:var(--mono); font-size:12.5px; color:var(--ochre); background:rgba(201,141,60,0.1); padding:2px 6px; border-radius:2px; }
+
+  .scene-label{
+    position:fixed; bottom:26px; left:clamp(24px,6vw,96px); z-index:10;
+    font-family:var(--mono); font-size:11px; color:var(--paper-faint); letter-spacing:0.06em; pointer-events:none;
+  }
+  .uncertain-badge{
+    display:inline-block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.04em;
+    color:var(--ochre); background:var(--ochre-dim); padding:6px 10px; border-radius:2px;
+    margin-bottom:14px;
+  }
+  .ai-result.uncertain .ai-cause{ color:var(--ochre); }
+
+  ::-webkit-scrollbar-thumb{ background:var(--hair-strong); border-radius:3px; }
+
+  @media (max-width:760px){
+    .scene{ padding:76px 24px 54px; }
+    .inv-grid{ grid-template-columns:1fr; gap:30px; }
+    #scene-investigate .scene-inner{ padding-bottom:36px; }
+    .impact-sub{ gap:14px 24px; flex-wrap:wrap; }
+    .compare-arrow{ display:none; }
+    .incident-row{ grid-template-columns:1fr; gap:6px; }
+    .compare-block{ gap:20px; }
+  }
+  @media (max-width:500px){
+    .topnav{ padding:20px 18px; }
+    .brand{ font-size:16px; }
+    .navdots{ gap:7px; }
+    .navdot{ width:13px; height:13px; }
+    .scene-label{ bottom:16px; left:18px; font-size:9px; }
+    #system-status{ bottom:16px !important; right:18px !important; font-size:9px !important; }
+    .summary-card{ padding-right:14px; }
+    .summary-card:not(:first-child){ padding-left:14px; }
+    .compare-value{ font-size:clamp(27px,9vw,38px); }
+    .disc-value{ font-size:clamp(40px,13vw,60px); }
+    .impact-num{ font-size:clamp(48px,15vw,72px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="env-grain"></div>
+
+<nav class="topnav">
+  <div class="brand">Fin<span>Trace</span></div>
+  <div class="navdots" id="navdots"></div>
+</nav>
+
+<!-- SCENE 1 : HERO -->
+<section class="scene active" id="scene-hero">
+  <div class="scene-inner">
+    <div class="hero-editorial">
+      <div class="hero-kicker">FINTRACE · FINANCIAL INCIDENT INVESTIGATION</div>
+      <h1 class="hero-headline">When numbers<br><em>don't agree.</em></h1>
+      <p class="hero-quote">"The discrepancy is only the beginning. Follow the evidence."</p>
+      <p class="hero-description">FinTrace investigates the gap between reported financials and underlying transaction truth — tracing evidence, identifying root cause, and recommending a bounded, human-approved fix.</p>
+      <button class="hero-enter" onclick="goTo(1)">ENTER THE INVESTIGATION <span class="hero-enter-arrow">→</span></button>
+    </div>
+
+    <div class="hero-system">
+      <div class="system-heading">financial signal</div>
+      <div class="system-card">
+        <div class="system-row"><span>PAYMENT EVENT</span><span>TRACE</span></div>
+        <div class="system-row"><span>LEDGER ENTRY</span><span>TRACE</span></div>
+        <div class="system-row alert"><span>RECONCILIATION</span><span>Δ FOUND</span></div>
+        <div class="system-row"><span>EVIDENCE</span><span>ANALYZE</span></div>
+        <div class="system-line"></div>
+      </div>
+    </div>
+
+    <div class="hero-bottom-left"><span>01</span>&nbsp;&nbsp;/&nbsp;&nbsp;ENTER&nbsp;&nbsp;/&nbsp;&nbsp;INVESTIGATE</div>
+
+    <div class="hero-scroll" onclick="goTo(1)">
+      <div class="hero-scroll-label">SCROLL</div>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENE 2 : INCIDENTS -->
+<section class="scene" id="scene-cc">
+  <div class="scene-inner">
+    <div class="cc-toolbar">
+      <div>
+        <div class="hero-eyebrow">02 · INCIDENTS</div>
+        <div class="cc-context">
+          <span>FINANCIAL OPERATIONS</span>
+          <span class="context-dot"></span>
+          <span>LIVE EXCEPTION QUEUE</span>
+        </div>
+      </div>
+      <div class="cc-period">
+        <span class="period-label">MONITORED PERIOD</span>
+        <span id="cc-period">—</span>
+      </div>
+    </div>
+
+    <div class="cc-summary">
+      <div class="summary-card">
+        <div class="summary-label">OPEN INCIDENTS</div>
+        <div class="summary-value alert" id="cc-active">—</div>
+        <div class="summary-note">requiring investigation</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">FINANCIAL DISCREPANCY</div>
+        <div class="summary-value" id="cc-impact">—</div>
+        <div class="summary-note">reported vs verified</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">INVESTIGATION STATE</div>
+        <div class="summary-value state" id="cc-state">READY</div>
+        <div class="summary-note">select an incident to begin</div>
+      </div>
+    </div>
+
+    <div class="queue-head">
+      <div>
+        <div class="queue-title">Exception queue</div>
+        <div class="queue-sub">Detected discrepancies from the financial truth layer</div>
+      </div>
+      <div class="queue-hint">SELECT A ROW →</div>
+    </div>
+
+    <div class="incident-list" id="incident-list"></div>
+
+    <div class="cc-footer">
+      <span>DETECT</span><span>→</span><span>SELECT</span><span>→</span><span>INVESTIGATE</span><span>→</span><span>RESOLVE</span>
+    </div>
+  </div>
+</section>
+
+<!-- SCENE 3 : INCIDENT DETAIL -->
+<section class="scene" id="scene-detail">
+  <div class="scene-inner">
+    <div class="hero-eyebrow">03 · INCIDENT</div>
+    <div class="id-meta" id="detail-meta"></div>
+    <h2 class="scene-title" id="detail-title" style="font-family:var(--serif); font-size:clamp(28px,4vw,38px); font-weight:400; color:var(--paper);"></h2>
+    <div class="compare-block">
+      <div class="compare-col">
+        <div class="compare-label">VERIFIED · LEDGER TRUTH</div>
+        <div class="compare-value verified" id="detail-expected"></div>
+      </div>
+      <div class="compare-arrow">→</div>
+      <div class="compare-col">
+        <div class="compare-label">REPORTED · DASHBOARD</div>
+        <div class="compare-value reported" id="detail-actual"></div>
+      </div>
+    </div>
+    <div class="discrepancy-block">
+      <div class="disc-label">DISCREPANCY</div>
+      <div class="disc-value" id="detail-discrepancy"></div>
+    </div>
+    <div class="cta-row">
+      <button class="scene-cta" onclick="startInvestigation()">Investigate</button>
+    </div>
+  </div>
+</section>
+
+<!-- SCENE 4 : INVESTIGATION -->
+<section class="scene" id="scene-investigate">
+  <div class="scene-inner">
+    <div class="hero-eyebrow">04 · EVIDENCE PIPELINE IN PROGRESS</div>
+    <h2 id="inv-title" style="font-family:var(--serif); font-size:clamp(24px,3.5vw,32px); font-weight:400; color:var(--paper); margin-bottom:32px;"></h2>
+    <div class="inv-grid">
+      <aside class="inv-support">
+        <div class="inv-section-label">FINTRACE EVIDENCE PIPELINE</div>
+        <div class="checklist" id="checklist"></div>
+        <div class="inv-section-label">EVIDENCE TRAIL</div>
+        <div class="evidence-trail" id="evidence-trail"></div>
+      </aside>
+      <div class="inv-right">
+        <div class="ai-result" id="ai-result">
+          <div class="ai-eyebrow">AI INVESTIGATION · ROOT CAUSE</div>
+          <div class="ai-cause" id="ai-cause"></div>
+          <div class="conf-row">
+            <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+            <div class="conf-text" id="conf-text"></div>
+          </div>
+          <div class="ai-explain" id="ai-explain"></div>
+          <div class="ai-eyebrow" style="margin-bottom:10px;">SUPPORTING EVIDENCE</div>
+          <div class="support-list" id="support-list"></div>
+          <div class="cta-row"><button class="scene-cta" onclick="goTo(4)">See Impact →</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENE 5 : IMPACT + RECOMMENDATION -->
+<section class="scene" id="scene-impact">
+  <div class="scene-inner">
+    <div class="hero-eyebrow">05 · IMPACT & RECOMMENDATION</div>
+    <div class="impact-hero">
+      <div class="impact-label">FINANCIAL IMPACT</div>
+      <div class="impact-num" id="impact-num"></div>
+      <div class="impact-sub">
+        <div class="impact-mini">Reported <b id="imp-reported"></b></div>
+        <div class="impact-mini">Verified <b id="imp-verified"></b></div>
+        <div class="impact-mini">Merchant <b id="imp-merchant"></b></div>
+      </div>
+    </div>
+    <div class="rec-block">
+      <div class="rec-label">RECOMMENDED ACTION</div>
+      <div class="rec-text" id="rec-text"></div>
+      <div class="flag-row">
+        <div class="flag"><span class="flag-dot"></span>Evidence-backed: YES</div>
+        <div class="flag"><span class="flag-dot"></span>Bounded action: YES</div>
+        <div class="flag"><span class="flag-dot"></span>Requires human approval</div>
+      </div>
+      <div class="approval-row" id="approval-row">
+        <button class="btn-approve" id="approve-button" onclick="approve()">Approve recommendation</button>
+        <button class="btn-review" id="review-button" onclick="review()">Review manually</button>
+      </div>
+      <div class="audit-log" id="audit-log"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENE 6 : EVALUATION -->
+<section class="scene" id="scene-eval">
+  <div class="scene-inner">
+    <div class="hero-eyebrow">06 · EVALUATION</div>
+    <div class="eval-top">
+      <div class="eval-acc" id="eval-acc"></div>
+      <div class="eval-acc-label">OVERALL MATCH RATE<br>ACROSS EVALUATED INCIDENTS<div class="eval-sample" id="eval-sample"></div></div>
+    </div>
+    <div class="eval-breakdown" id="eval-breakdown"></div>
+    <div class="eval-note" id="eval-note"></div>
+    <div class="eval-caveat" id="eval-caveat"></div>
+  </div>
+</section>
+
+<script>
+/* =========================================================
+   No embedded data. DATA is null until fintrace_data.json
+   (written by data_gen/export_frontend_data.py) is fetched.
+========================================================= */
+let DATA = null;
+let dataLoading = true;
+
+const scenes = ['scene-hero','scene-cc','scene-detail','scene-investigate','scene-impact','scene-eval'];
+
+const SCENE_NAMES = ['FinTrace','Incidents','Incident','Investigation','Impact','Evaluation'];
+
+const sceneLabel = document.createElement('div');
+
+sceneLabel.className = 'scene-label';
+
+document.body.appendChild(sceneLabel);
+
+const sceneRail = document.createElement('aside');
+sceneRail.className = 'scene-rail';
+sceneRail.setAttribute('aria-label', 'Scene navigation');
+document.body.appendChild(sceneRail);
+
+let current = 0;
+
+let activeIncident = null;
+
+let wheelLocked = false;
+
+let touchStartY = null;
+
+let investigationTimers = [];
+
+function formatMoney(currency, value){
+  const amount = Number.parseFloat(String(value).replace(/,/g, ''));
+  if(!Number.isFinite(amount)) return `${currency} ${value}`;
+  return `${currency} ${amount.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+}
+
+function clearInvestigationTimers(){
+  investigationTimers.forEach(clearTimeout);
+  investigationTimers = [];
+}
+
+function investigationTimeout(callback, delay){
+  const timer = setTimeout(() => {
+    investigationTimers = investigationTimers.filter(id => id !== timer);
+    callback();
+  }, delay);
+  investigationTimers.push(timer);
+  return timer;
+}
+
+function renderNav(){
+  const nav = document.getElementById('navdots');
+  nav.innerHTML = '';
+  sceneRail.innerHTML = '';
+  const labels = ['01 FINTRACE','02 INCIDENTS','03 INCIDENT','04 INVESTIGATE','05 IMPACT','06 EVALUATION'];
+
+  scenes.forEach((id, i) => {
+    const locked = (i >= 2 && i <= 4 && !activeIncident) || (i === 5 && !DATA);
+    const b = document.createElement('button');
+    b.className = 'navdot' + (i === current ? ' on' : '') + (locked ? ' locked' : '');
+    b.textContent = labels[i];
+    b.title = SCENE_NAMES[i];
+    b.onclick = () => navigateToScene(i);
+    nav.appendChild(b);
+
+    const railButton = document.createElement('button');
+    railButton.className = 'scene-rail-button' + (i === current ? ' on' : '') + (locked ? ' locked' : '');
+    railButton.textContent = String(i + 1).padStart(2, '0');
+    railButton.title = `${labels[i]} — ${locked ? 'unavailable' : 'open'}`;
+    railButton.setAttribute('aria-label', labels[i]);
+    railButton.onclick = () => navigateToScene(i);
+    sceneRail.appendChild(railButton);
+  });
+}
+
+function navigateToScene(i){
+  if(i >= 2 && i <= 4 && !activeIncident){
+    showNavNotice('SELECT AN INCIDENT', 'Choose an incident from the exception queue first.');
+    return;
+  }
+  if(i === 5 && !DATA){
+    showNavNotice('EVALUATION NOT CONNECTED', 'Run the export script first.');
+    return;
+  }
+  goTo(i);
+}
+
+function showNavNotice(title, message){
+  let notice = document.getElementById('nav-notice');
+  if(!notice){
+    notice = document.createElement('div');
+    notice.id = 'nav-notice';
+    notice.style.cssText = `
+      position:fixed; top:78px; right:clamp(24px,6vw,96px); z-index:30; max-width:300px;
+      padding:14px 16px; border:1px solid var(--hair-strong); background:rgba(13,16,19,.94);
+      backdrop-filter:blur(12px); opacity:0; transform:translateY(-6px);
+      transition:opacity .25s ease, transform .25s ease; pointer-events:none;
+    `;
+    document.body.appendChild(notice);
+  }
+  notice.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.07em;color:var(--ochre);margin-bottom:6px;">${title}</div>
+    <div style="font-family:var(--sans);font-size:12px;line-height:1.5;color:var(--paper-dim);">${message}</div>
+  `;
+  requestAnimationFrame(() => { notice.style.opacity = '1'; notice.style.transform = 'translateY(0)'; });
+  clearTimeout(notice._timer);
+  notice._timer = setTimeout(() => { notice.style.opacity = '0'; notice.style.transform = 'translateY(-6px)'; }, 2600);
+}
+
+function goTo(i){
+  if(i < 0 || i >= scenes.length || i === current) return;
+  if(current === 3) clearInvestigationTimers();
+  document.getElementById(scenes[current]).classList.remove('active');
+  current = i;
+  document.getElementById(scenes[current]).classList.add('active');
+  renderNav();
+  sceneLabel.textContent = SCENE_NAMES[i];
+  if(scenes[i] === 'scene-cc') renderCommandCenter();
+  if(scenes[i] === 'scene-eval') renderEvaluation();
+  if(scenes[i] === 'scene-investigate') document.getElementById('scene-investigate').scrollTop = 0;
+}
+
+function nextScene(){
+  if(current >= scenes.length - 1) return;
+  const next = current + 1;
+  if(next >= 2 && next <= 4 && !activeIncident){
+    showNavNotice('SELECT AN INCIDENT', 'Choose an incident from the exception queue first.');
+    return;
+  }
+  if(next === 5 && !DATA){
+    showNavNotice('EVALUATION NOT CONNECTED', 'Evaluation data is not available yet.');
+    return;
+  }
+  goTo(next);
+}
+
+function previousScene(){
+  if(current > 0) goTo(current - 1);
+}
+
+/* mouse wheel navigation */
+document.addEventListener('wheel', e => {
+  if(current === 3){
+    const investigation = document.getElementById('scene-investigate');
+    const atTop = investigation.scrollTop <= 1;
+    const atBottom = investigation.scrollTop + investigation.clientHeight >= investigation.scrollHeight - 1;
+    if((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) return;
+  }
+  if(e.target.closest('.incident-list')) return;
+  if(Math.abs(e.deltaY) < 10) return;
+  if(wheelLocked) return;
+  wheelLocked = true;
+  if(e.deltaY > 0) nextScene(); else previousScene();
+  setTimeout(() => { wheelLocked = false; }, 700);
+}, {passive:true});
+
+/* touch navigation */
+document.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].clientY; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if(touchStartY === null) return;
+  const distance = touchStartY - e.changedTouches[0].clientY;
+  touchStartY = null;
+  if(Math.abs(distance) < 50) return;
+  if(current === 3){
+    const investigation = document.getElementById('scene-investigate');
+    const atTop = investigation.scrollTop <= 1;
+    const atBottom = investigation.scrollTop + investigation.clientHeight >= investigation.scrollHeight - 1;
+    if((distance > 0 && !atBottom) || (distance < 0 && !atTop)) return;
+  }
+  if(distance > 0) nextScene(); else previousScene();
+}, {passive:true});
+
+/* ===================== COMMAND CENTER ===================== */
+function renderCommandCenter(){
+  const list = document.getElementById('incident-list');
+  list.innerHTML = '';
+
+  if(!DATA || !DATA.incidents || DATA.incidents.length === 0){
+    document.getElementById('cc-active').textContent = '—';
+    document.getElementById('cc-impact').textContent = '—';
+    document.getElementById('cc-state').textContent = dataLoading ? 'CONNECTING' : 'OFFLINE';
+    document.getElementById('cc-period').textContent = '—';
+    list.innerHTML = dataLoading ? `
+      <div class="empty-state">
+        <div class="empty-title">Connecting to FinTrace…</div>
+        <div class="empty-body">Checking for <code>fintrace_data.json</code>.</div>
+      </div>
+    ` : `
+      <div class="empty-state">
+        <div class="empty-title">No incident stream connected</div>
+        <div class="empty-body">Run <code>python -m data_gen.export_frontend_data</code> from the repo root and serve this file over HTTP so it can fetch <code>fintrace_data.json</code>. FinTrace never shows fabricated financial values — including here.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const periods = DATA.incidents.map(i => i.period).filter(Boolean);
+  document.getElementById('cc-period').textContent = periods.length ? [...new Set(periods)].join(' · ') : 'CURRENT DATASET';
+
+  const impactByCurrency = {};
+
+DATA.incidents.forEach(incident => {
+  const value = parseFloat(String(incident.discrepancy).replace(/,/g, ''));
+
+  if (!Number.isFinite(value)) return;
+
+  impactByCurrency[incident.currency] =
+    (impactByCurrency[incident.currency] || 0) + value;
+});
+
+const formattedImpact = Object.entries(impactByCurrency)
+  .map(([currency, value]) =>
+    `${currency} ${value.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`
+  )
+  .join(' · ');
+
+document.getElementById('cc-active').textContent = DATA.incidents.length;
+document.getElementById('cc-impact').textContent = formattedImpact || '—';
+document.getElementById('cc-state').textContent = activeIncident ? 'SELECTED' : 'READY';
+
+  DATA.incidents.forEach(inc => {
+    const row = document.createElement('div');
+    row.className = 'incident-row';
+    row.onclick = () => openIncident(inc);
+    row.innerHTML = `
+      <div class="inc-id">${inc.incident_id}</div>
+      <div class="inc-title">${inc.incident_type.replace(/_/g,' ')}</div>
+      <div class="inc-merchant">${inc.merchant_name}</div>
+      <div class="inc-amount">${formatMoney(inc.currency, inc.discrepancy)}</div>
+      <div class="sev-badge sev-${inc.severity}">${inc.severity}</div>
+      <div class="inc-arrow">→</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+/* ===================== INCIDENT DETAIL ===================== */
+function openIncident(inc){
+  activeIncident = inc;
+  document.getElementById('detail-meta').innerHTML =
+    `<span>${inc.incident_id}</span><span>${inc.merchant_name}</span><span>${inc.period}</span><span>SEVERITY: ${inc.severity.toUpperCase()}</span>`;
+  document.getElementById('detail-title').textContent =
+  inc.incident_type.replace(/_/g, ' ');
+  document.getElementById('detail-expected').textContent = formatMoney(inc.currency, inc.expected_revenue);
+  document.getElementById('detail-actual').textContent = formatMoney(inc.currency, inc.actual_revenue);
+  document.getElementById('detail-discrepancy').textContent = formatMoney(inc.currency, inc.discrepancy);
+  renderNav();
+  goTo(2);
+}
+
+/* ===================== INVESTIGATION SEQUENCE ===================== */
+function startInvestigation(){
+  if(!activeIncident){
+    showNavNotice('SELECT AN INCIDENT', 'Choose an incident from the exception queue first.');
+    return;
+  }
+  goTo(3);
+  clearInvestigationTimers();
+  document.getElementById('scene-investigate').scrollTop = 0;
+  const steps = [
+    "Verifying reported discrepancy",
+    "Calculating ledger truth",
+    "Tracing payments in scope",
+    "Verifying payment-to-ledger relationships",
+    "Preparing evidence for AI investigation"
+  ];
+  const cl = document.getElementById('checklist');
+  cl.innerHTML = '';
+  steps.forEach((s,i)=>{
+    const d = document.createElement('div');
+    d.className = 'check-item';
+    d.id = 'step-'+i;
+    d.innerHTML = `<div class="check-mark">✓</div><div class="check-text">${s}</div>`;
+    cl.appendChild(d);
+  });
+  document.getElementById('inv-title').textContent = activeIncident.merchant_name + ' · ' + activeIncident.incident_id;
+  document.getElementById('evidence-trail').innerHTML = '';
+  document.getElementById('ai-result').classList.remove('show');
+
+  let i = 0;
+  function nextStep(){
+    if(i>0) document.getElementById('step-'+(i-1)).classList.replace('active','done');
+    if(i < steps.length){
+      const el = document.getElementById('step-'+i);
+      el.classList.add('active');
+      el.querySelector('.check-mark').innerHTML = i===steps.length-1 ? '<div class="pulse"></div>' : '✓';
+      i++;
+      investigationTimeout(nextStep, 550);
+    } else {
+      document.getElementById('step-'+(steps.length-1)).classList.replace('active','done');
+      document.getElementById('step-'+(steps.length-1)).querySelector('.check-mark').innerHTML = '✓';
+      revealEvidence();
+    }
+  }
+  nextStep();
+}
+
+function revealEvidence(){
+  const trail = document.getElementById('evidence-trail');
+  const nodes = [
+    { label:'INCIDENT', detail: `${activeIncident.incident_id} · discrepancy ${formatMoney(activeIncident.currency, activeIncident.discrepancy)}` },
+    { label:'AFFECTED PAYMENT', detail: activeIncident.evidence.payments.map(p=>`${p.payment_id} · ${formatMoney(p.currency || activeIncident.currency, p.amount)} · ${p.status} · ${p.timestamp}`).join('<br>') },
+    { label:'LEDGER ENTRY', detail: activeIncident.evidence.ledger_entries.map(e=>`${e.entry_id} · ${e.entry_type} · ${e.direction} · ${formatMoney(e.currency || activeIncident.currency, e.amount)} · ${e.timestamp}`).join('<br>') },
+    { label:'VERIFIED FINANCIAL EVIDENCE', detail: 'Independently reconciled against the ledger — not derived from the dashboard' }
+  ];
+  nodes.forEach((n,idx)=>{
+    investigationTimeout(()=>{
+      const el = document.createElement('div');
+      el.className = 'trail-node';
+      el.innerHTML = `<div class="trail-label">${n.label}</div><div class="trail-detail">${n.detail}</div>`;
+      trail.appendChild(el);
+      requestAnimationFrame(()=> investigationTimeout(()=>el.classList.add('show'),20));
+    }, idx*280);
+  });
+  investigationTimeout(revealAI, nodes.length*280 + 300);
+}
+
+function revealAI(){
+  const r = activeIncident.ai_result;
+  const uncertain = r.root_cause_category === 'insufficient_evidence' || r.root_cause_category === 'other';
+
+const aiResultEl = document.getElementById('ai-result');
+aiResultEl.classList.toggle('uncertain', uncertain);
+
+document.getElementById('ai-cause').textContent = r.root_cause;
+
+const confidenceValue =
+  typeof r.confidence === 'number'
+    ? r.confidence
+    : r.confidence === 'high'
+      ? 1
+      : r.confidence === 'medium'
+        ? 0.65
+        : r.confidence === 'low'
+          ? 0.35
+          : 0;
+
+document.getElementById('conf-fill').style.width =
+  (confidenceValue * 100) + '%';
+
+document.getElementById('conf-fill').style.background =
+  uncertain ? 'var(--ochre)' : 'var(--green)';
+
+document.getElementById('conf-text').textContent =
+  (typeof r.confidence === 'string'
+    ? r.confidence.toUpperCase()
+    : Math.round(confidenceValue * 100) + '%') + ' confidence';
+
+document.getElementById('conf-text').style.color =
+  uncertain ? 'var(--ochre)' : 'var(--green)';
+
+document.getElementById('ai-explain').textContent = r.explanation;
+
+document.getElementById('support-list').innerHTML =
+  (r.evidence || [])
+    .map(e => `<div class="support-item">${e}</div>`)
+    .join('');
+  const badgeId = 'uncertain-badge';
+  document.getElementById(badgeId)?.remove();
+  if(uncertain){
+    const badge = document.createElement('div');
+    badge.id = badgeId;
+    badge.className = 'uncertain-badge';
+    badge.textContent = '⚠ EVIDENCE INSUFFICIENT FOR A CONFIDENT ROOT CAUSE';
+    document.getElementById('ai-cause').insertAdjacentElement('beforebegin', badge);
+  }
+
+  aiResultEl.classList.add('show');
+
+  document.getElementById('impact-num').textContent = formatMoney(activeIncident.currency, activeIncident.discrepancy);
+  document.getElementById('imp-reported').textContent = formatMoney(activeIncident.currency, activeIncident.actual_revenue);
+  document.getElementById('imp-verified').textContent = formatMoney(activeIncident.currency, activeIncident.expected_revenue);
+  document.getElementById('imp-merchant').textContent = activeIncident.merchant_name;
+  document.getElementById('rec-text').textContent = recommendationFor(r.root_cause_category);
+  document.getElementById('audit-log').classList.remove('show');
+  document.getElementById('audit-log').innerHTML = '';
+  document.getElementById('approval-row').style.display = 'flex';
+  document.getElementById('review-button').style.display = 'inline-flex';
+  document.getElementById('review-button').textContent = 'Review manually';
+
+  // Never offer an automated approval for a root cause the system itself
+  // flagged as unresolved — that would contradict the evidence-backed
+  // guarantee shown elsewhere in this scene.
+  const approveBtn = document.getElementById('approve-button');
+  approveBtn.style.display = uncertain ? 'none' : 'inline-flex';
+}
+
+function recommendationFor(category){
+  if(category==='missing_refund') return 'Reprocess the affected refund into the revenue pipeline and refresh downstream dashboards for this merchant and period.';
+  if(category==='duplicate_payment') return 'Remove the duplicated payment entry from the revenue aggregation and refresh downstream dashboards for this merchant and period.';
+  return 'Route to manual review — evidence is insufficient for an automated recommendation.';
+}
+
+/* ===================== APPROVAL / AUDIT ===================== */
+function approve(){
+  const log = document.getElementById('audit-log');
+  log.classList.add('show');
+  log.innerHTML = `
+    <div class="review-state">
+      <strong>APPROVED FOR REMEDIATION</strong>
+      <div>Human approval recorded for the proposed action. No automated remediation has been executed in this prototype.</div>
+      <div class="review-status">INCIDENT STATUS · OPEN UNTIL REMEDIATION IS CONFIRMED</div>
+    </div>
+    <div class="backend-note">Recorded for this session only. Persistent audit-trail storage and remediation execution are not yet connected.</div>
+  `;
+  document.getElementById('approval-row').style.display = 'none';
+}
+
+function review(){
+  const canApprove = !['insufficient_evidence', 'other'].includes(activeIncident.ai_result.root_cause_category);
+  const evidenceConclusion = canApprove
+    ? 'AI root cause identified from the evidence'
+    : 'AI marked the available evidence as insufficient for a specific root cause';
+  const decisionControls = canApprove
+    ? '<button class="btn-approve" onclick="approve()">Approve action</button><button class="btn-review" onclick="reject()">Reject / keep open</button>'
+    : '<button class="btn-review" onclick="reject()">Keep incident open</button>';
+  const log = document.getElementById('audit-log');
+  log.classList.add('show');
+  log.innerHTML = `
+    <div class="review-state">
+      <strong>UNDER HUMAN REVIEW</strong>
+      <div class="review-status">INCIDENT STATUS · OPEN · AI RECOMMENDATION NOT EXECUTED</div>
+      <div class="review-section">
+        <div class="review-section-label">EVIDENCE VERIFIED</div>
+        <div class="review-check">Dashboard discrepancy verified</div>
+        <div class="review-check">Affected payment traced</div>
+        <div class="review-check">Ledger entry verified</div>
+        <div class="review-check">${evidenceConclusion}</div>
+      </div>
+      <div class="review-section">
+        <div class="review-section-label">PROPOSED ACTION</div>
+        <div class="review-proposal">${recommendationFor(activeIncident.ai_result.root_cause_category)}</div>
+      </div>
+      <div class="review-section-label" style="margin-top:22px;">REVIEWER DECISION REQUIRED</div>
+      <div class="review-actions">${decisionControls}<button class="review-link" onclick="goTo(3)">Return to investigation evidence →</button></div>
+    </div>
+    <div class="backend-note">This review state is session-only. No remediation is executed by FinTrace.</div>
+  `;
+  document.getElementById('approval-row').style.display = 'none';
+}
+
+function reject(){
+  const log = document.getElementById('audit-log');
+  log.classList.add('show');
+  log.innerHTML = `
+    <div class="review-state">
+      <strong>RECOMMENDATION REJECTED</strong>
+      <div>The reviewer declined the proposed action. No remediation has been authorized or executed.</div>
+      <div class="review-status">INCIDENT STATUS · OPEN</div>
+      <div class="review-actions"><button class="review-link" onclick="goTo(3)">Return to investigation evidence →</button></div>
+    </div>
+    <div class="backend-note">This decision is recorded for this session only. Persistent audit storage is not yet connected.</div>
+  `;
+}
+
+/* ===================== EVALUATION ===================== */
+function renderEvaluation(){
+
+  if(!DATA || !DATA.evaluation){
+
+    document.getElementById('eval-acc').textContent = '—';
+    document.getElementById('eval-sample').textContent = '';
+    document.getElementById('eval-breakdown').innerHTML = '';
+    document.getElementById('eval-note').textContent =
+      'No evaluation data connected yet. Run the evaluation and export scripts first.';
+    document.getElementById('eval-caveat').textContent = '';
+
+    return;
+  }
+
+  const ev = DATA.evaluation;
+
+  if(!ev.total || !ev.breakdown || !ev.breakdown.length){
+
+    document.getElementById('eval-acc').textContent = '—';
+    document.getElementById('eval-sample').textContent = '';
+    document.getElementById('eval-breakdown').innerHTML = '';
+    document.getElementById('eval-note').textContent =
+      'No completed evaluation trials are available yet.';
+    document.getElementById('eval-caveat').textContent = '';
+
+    return;
+  }
+
+  document.getElementById('eval-acc').textContent =
+    Math.round(ev.accuracy) + '%';
+  document.getElementById('eval-sample').textContent = `${ev.total} COMPLETED TRIAL${ev.total === 1 ? '' : 'S'}`;
+
+  document.getElementById('eval-breakdown').innerHTML =
+    ev.breakdown.map(b => `
+
+      <div class="eval-row">
+
+        <div class="eval-type">
+          ${b.incident_type.replace(/_/g,' ')}
+        </div>
+
+        <div class="eval-score">
+          ${b.passed} / ${b.total} passed
+        </div>
+
+        <div class="eval-track">
+          <div
+            class="eval-fill"
+            style="width:${b.accuracy}%">
+          </div>
+        </div>
+
+      </div>
+
+    `).join('');
+
+  document.getElementById('eval-note').textContent =
+    `Evaluated across ${ev.total} completed investigation trials. ` +
+    `${ev.passed} passed and ${ev.failed} failed. ` +
+    `Match rate: ${ev.accuracy.toFixed(1)}%.`;
+  document.getElementById('eval-caveat').textContent =
+    ev.total < 10
+      ? 'Small validation sample — use this as an early quality signal, not a performance guarantee.'
+      : 'Results reflect the completed validation sample currently exported by the investigator.';
+}
+ renderNav();
+sceneLabel.textContent = SCENE_NAMES[0];
+
+/* =========================================================
+   LIVE DATA CONNECTION — fetches fintrace_data.json,
+   written by data_gen/export_frontend_data.py.
+   Must be served over http(s), not file://.
+   Run: python -m http.server 8000  then open
+   http://localhost:8000/fintrace-frontend.html
+========================================================= */
+const statusEl = document.createElement('div');
+statusEl.id = 'system-status';
+statusEl.style.cssText = 'position:fixed;bottom:26px;right:clamp(24px,6vw,96px);z-index:20;font-family:var(--mono);font-size:10px;color:var(--paper-faint);letter-spacing:.04em;';
+document.body.appendChild(statusEl);
+
+fetch('fintrace_data.json', {cache:'no-store'})
+  .then(r => { if(!r.ok) throw new Error('not found'); return r.json(); })
+  .then(json => {
+    dataLoading = false;
+    if(json.incidents && json.incidents.length){
+      DATA = json;
+statusEl.textContent = 'FINTRACE · LIVE';
+      statusEl.style.color = 'var(--green)';
+    } else {
+statusEl.textContent = 'FINTRACE · NO INCIDENTS';
+      statusEl.style.color = 'var(--ochre)';
+    }
+    renderNav();
+    if(scenes[current] === 'scene-cc') renderCommandCenter();
+    if(scenes[current] === 'scene-eval') renderEvaluation();
+  })
+  .catch(() => {
+    dataLoading = false;
+    statusEl.textContent = 'NOT CONNECTED · run the export script, serve over http';
+    statusEl.style.color = 'var(--paper-faint)';
+    if(scenes[current] === 'scene-cc') renderCommandCenter();
+  });
+
+/* keyboard nav */
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); nextScene(); }
+  if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); previousScene(); }
+});
+</script>
+</body>
+</html>

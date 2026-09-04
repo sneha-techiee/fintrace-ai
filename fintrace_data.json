@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-09-04T16:50:34.728468",
+  "incidents": [
+    {
+      "incident_id": "duplicate_payment_incident_1",
+      "merchant_id": "merch_3",
+      "merchant_name": "Hancock, Hartman and Smith",
+      "incident_type": "duplicate_payment",
+      "expected_revenue": "9854.67",
+      "actual_revenue": "19709.34",
+      "discrepancy": "9854.67",
+      "currency": "INR",
+      "severity": "high",
+      "period": "June 2026",
+      "evidence": {
+        "incident": {
+          "incident_id": "incident_1",
+          "merchant_id": "merch_3",
+          "incident_type": "duplicate_payment",
+          "expected_revenue": "9854.67",
+          "actual_revenue": "19709.34",
+          "discrepancy": "9854.67",
+          "currency": "INR",
+          "severity": "high"
+        },
+        "payments": [
+          {
+            "payment_id": "pay_1",
+            "merchant_id": "merch_3",
+            "amount": "9854.67",
+            "currency": "INR",
+            "status": "completed",
+            "timestamp": "2026-06-09T01:43:43"
+          },
+          {
+            "payment_id": "pay_12",
+            "merchant_id": "merch_3",
+            "amount": "8332.17",
+            "currency": "INR",
+            "status": "failed",
+            "timestamp": "2026-06-27T08:24:07"
+          },
+          {
+            "payment_id": "pay_14",
+            "merchant_id": "merch_3",
+            "amount": "3826.97",
+            "currency": "INR",
+            "status": "ongoing",
+            "timestamp": "2026-06-01T03:49:08"
+          },
+          {
+            "payment_id": "pay_19",
+            "merchant_id": "merch_3",
+            "amount": "1551.06",
+            "currency": "INR",
+            "status": "failed",
+            "timestamp": "2026-06-28T06:22:14"
+          }
+        ],
+        "ledger_entries": [
+          {
+            "entry_id": "entry_1",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_3",
+            "entry_type": "payment",
+            "amount": "9854.67",
+            "currency": "INR",
+            "timestamp": "2026-06-09T01:43:43",
+            "direction": "credit"
+          }
+        ]
+      },
+      "ai_result": {
+        "incident_id": "incident_1",
+        "merchant_id": "merch_3",
+        "discrepancy": "9854.67",
+        "currency": "INR",
+        "severity": "high",
+        "root_cause_category": "duplicate_payment",
+        "root_cause": "A completed payment was erroneously counted twice in the actual revenue calculation.",
+        "explanation": "The discrepancy of 9854.67 INR is precisely equal to the amount of a completed payment, pay_1. The expected revenue of 9854.67 INR, when added to the amount of pay_1 (9854.67 INR), exactly equals the actual revenue of 19709.34 INR. Furthermore, pay_1 is recorded in the ledger by entry_1, confirming its initial, correct inclusion. This strong arithmetic relationship, coupled with the existence of a corresponding ledger entry for the payment, indicates that pay_1 was counted an additional time, leading to the inflated actual revenue.",
+        "evidence": [
+          "The incident reports an expected revenue of '9854.67 INR' and an actual revenue of '19709.34 INR' for merchant 'merch_3'.",
+          "The discrepancy is calculated as 'actual_revenue' ('19709.34 INR') - 'expected_revenue' ('9854.67 INR') = '9854.67 INR'.",
+          "Payment 'pay_1' for merchant 'merch_3' has an 'amount' of '9854.67 INR' and a 'status' of 'completed'.",
+          "Ledger entry 'entry_1' corresponds to 'payment_id' 'pay_1', 'entry_type' 'payment', 'amount' '9854.67 INR', and 'direction' 'credit'.",
+          "The arithmetic relationship 'expected_revenue' ('9854.67 INR') + 'payment_amount' ('pay_1': '9854.67 INR') = 'actual_revenue' ('19709.34 INR') holds true."
+        ],
+        "confidence": "high"
+      }
+    },
+    {
+      "incident_id": "missing_refund_incident_1",
+      "merchant_id": "merch_4",
+      "merchant_name": "Carter-Wiley",
+      "incident_type": "missing_refund",
+      "expected_revenue": "503.52",
+      "actual_revenue": "1410.12",
+      "discrepancy": "906.60",
+      "currency": "USD",
+      "severity": "high",
+      "period": "June 2026",
+      "evidence": {
+        "incident": {
+          "incident_id": "incident_1",
+          "merchant_id": "merch_4",
+          "incident_type": "missing_refund",
+          "expected_revenue": "503.52",
+          "actual_revenue": "1410.12",
+          "discrepancy": "906.60",
+          "currency": "USD",
+          "severity": "high"
+        },
+        "payments": [
+          {
+            "payment_id": "pay_3",
+            "merchant_id": "merch_4",
+            "amount": "4607.05",
+            "currency": "USD",
+            "status": "ongoing",
+            "timestamp": "2026-06-21T00:28:02"
+          },
+          {
+            "payment_id": "pay_5",
+            "merchant_id": "merch_4",
+            "amount": "2566.51",
+            "currency": "USD",
+            "status": "ongoing",
+            "timestamp": "2026-06-21T05:01:36"
+          },
+          {
+            "payment_id": "pay_11",
+            "merchant_id": "merch_4",
+            "amount": "5786.82",
+            "currency": "USD",
+            "status": "ongoing",
+            "timestamp": "2026-06-11T18:04:03"
+          },
+          {
+            "payment_id": "pay_17",
+            "merchant_id": "merch_4",
+            "amount": "2421.30",
+            "currency": "USD",
+            "status": "completed",
+            "timestamp": "2026-06-28T07:15:19"
+          },
+          {
+            "payment_id": "pay_18",
+            "merchant_id": "merch_4",
+            "amount": "3458.57",
+            "currency": "USD",
+            "status": "failed",
+            "timestamp": "2026-06-07T10:13:54"
+          }
+        ],
+        "ledger_entries": [
+          {
+            "entry_id": "entry_5",
+            "payment_id": "pay_17",
+            "merchant_id": "merch_4",
+            "entry_type": "payment",
+            "amount": "2421.30",
+            "currency": "USD",
+            "timestamp": "2026-06-28T07:15:19",
+            "direction": "credit"
+          },
+          {
+            "entry_id": "entry_9",
+            "payment_id": "pay_17",
+            "merchant_id": "merch_4",
+            "entry_type": "refund",
+            "amount": "906.60",
+            "currency": "USD",
+            "timestamp": "2026-06-30T06:05:45",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_14",
+            "payment_id": "pay_17",
+            "merchant_id": "merch_4",
+            "entry_type": "refund",
+            "amount": "1011.18",
+            "currency": "USD",
+            "timestamp": "2026-06-30T01:09:22",
+            "direction": "debit"
+          }
+        ]
+      },
+      "ai_result": {
+        "incident_id": "incident_1",
+        "merchant_id": "merch_4",
+        "discrepancy": "906.60",
+        "currency": "USD",
+        "severity": "high",
+        "root_cause_category": "missing_refund",
+        "root_cause": "A processed refund was not correctly deducted when calculating the actual revenue.",
+        "explanation": "The actual revenue reported is higher than the expected revenue by 906.60 USD. Investigation of the ledger entries reveals a refund (entry_9) for the exact amount of 906.60 USD associated with payment pay_17. This refund, identified as a debit, was likely processed but its deduction was omitted during the aggregation of actual revenue, leading to the observed overstatement.",
+        "evidence": [
+          "The incident details indicate a discrepancy of 906.60 USD (1410.12 USD actual revenue - 503.52 USD expected revenue = 906.60 USD discrepancy).",
+          "Ledger entry entry_9 for merchant merch_4 records a refund (entry_type: 'refund') with an amount of 906.60 USD, corresponding to payment_id pay_17, and a direction of 'debit'.",
+          "This refund amount (906.60 USD) precisely matches the calculated discrepancy.",
+          "The arithmetic relationship actual_revenue - refund_amount = expected_revenue holds true: 1410.12 USD (actual_revenue) - 906.60 USD (refund from entry_9) = 503.52 USD (expected_revenue)."
+        ],
+        "confidence": "high"
+      }
+    }
+  ],
+  "evaluation": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "accuracy": 100.0,
+    "breakdown": [
+      {
+        "incident_type": "duplicate_payment",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "accuracy": 100.0
+      },
+      {
+        "incident_type": "missing_refund",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "accuracy": 100.0
+      }
+    ]
+  }
+}

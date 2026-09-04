@@ -52,6 +52,34 @@ def load_results():
                 continue
 
     return results
+def summarize_results():
+    results = load_results()
+
+    completed = [
+        r for r in results
+        if r.get("status") not in {
+            "quota_exhausted",
+            "skipped",
+            "error"
+        }
+        and "passed" in r
+    ]
+
+    passed = sum(
+        1 for r in completed
+        if r["passed"]
+    )
+
+    failed = sum(
+        1 for r in completed
+        if not r["passed"]
+    )
+
+    return {
+        "total": len(completed),
+        "passed": passed,
+        "failed": failed
+    }
 
 def run_single_evaluation(incident_type):
 
@@ -212,17 +240,19 @@ def run_single_evaluation(incident_type):
         "root_cause_category"
     )
 
+    passed = predicted == incident_type
+
     return {
         "expected": incident_type,
         "predicted": predicted,
         "confidence": ai_result.get("confidence"),
-        "incident_id": incident.incident_id
+        "incident_id": incident.incident_id,
+        "passed": passed
     }
-
 
 def main():
 
-    NUM_TRIALS = 1
+    NUM_TRIALS = 1 # will increase it when quota is not exhausted
 
     incident_types = [
         "duplicate_payment",
@@ -234,7 +264,7 @@ def main():
     failed_tests = 0
 
     print("\n========================================")
-    print("       FINTRACE AI EVALUATION")
+    print("FINTRACE AI EVALUATION")
     print("========================================")
 
     for incident_type in incident_types:
@@ -270,7 +300,7 @@ def main():
 
                 expected = result["expected"]
                 predicted = result["predicted"]
-                passed = predicted == expected
+                passed = result["passed"]
 
                 if passed:
 
@@ -348,6 +378,26 @@ def main():
 
     print("========================================\n")
 
+    # ---------------------------------------------------------
+    # Cumulative metrics across all evaluation runs
+    # ---------------------------------------------------------
+
+    cumulative = summarize_results()
+
+    print("\n========================================")
+    print("        CUMULATIVE RESULTS")
+    print("========================================")
+    print(f"Total completed tests : {cumulative['total']}")
+    print(f"Passed                : {cumulative['passed']}")
+    print(f"Failed                : {cumulative['failed']}")
+
+    if cumulative["total"] > 0:
+        accuracy = (
+            cumulative["passed"] / cumulative["total"]
+        ) * 100
+        print(f"Accuracy              : {accuracy:.2f}%")
+
+    print("========================================\n")
 
 if __name__ == "__main__":
-    main()
+      main()

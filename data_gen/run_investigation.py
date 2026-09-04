@@ -144,10 +144,7 @@ if __name__ == "__main__":
         period_end
     )
 
-    if faulty_dashboard_metrics is None:
-        raise RuntimeError(
-            f"Could not create a {incident_type} scenario."
-        )
+    
 
     if injected_incident_type is None:
         raise RuntimeError(
