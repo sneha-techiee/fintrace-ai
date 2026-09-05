@@ -252,7 +252,7 @@ def run_single_evaluation(incident_type):
 
 def main():
 
-    NUM_TRIALS = 1 # will increase it when quota is not exhausted
+    NUM_TRIALS = 5 # will increase it when quota is not exhausted
 
     incident_types = [
         "duplicate_payment",

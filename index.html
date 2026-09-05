@@ -67,6 +67,8 @@
   .scene-inner{ max-width:1080px; width:100%; min-width:0; margin:0 auto; flex:1; display:flex; flex-direction:column; }
   #scene-investigate{ overflow-y:auto; overscroll-behavior-y:contain; }
   #scene-investigate .scene-inner{ flex:none; min-height:100%; padding-bottom:56px; }
+  #scene-impact{ overflow-y:auto; overscroll-behavior-y:contain; }
+  #scene-impact .scene-inner{ flex:none; min-height:100%; padding-bottom:56px; }
 
   .topnav{
     position:fixed; top:0; left:0; right:0; z-index:10;
@@ -382,6 +384,21 @@
   .impact-sub{ display:flex; gap:40px; margin-top:24px; }
   .impact-mini{ font-size:13px; color:var(--paper-dim); }
   .impact-mini b{ color:var(--paper); font-family:var(--mono); font-weight:400; }
+  .impact-evidence{ margin:0 0 42px; }
+  .impact-evidence-head{ display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:14px; }
+  .impact-evidence-label{ font-family:var(--mono); font-size:10px; color:var(--paper-faint); letter-spacing:.08em; }
+  .impact-scroller-controls{ display:flex; gap:7px; }
+  .impact-scroll-button{ width:30px; height:26px; border:1px solid var(--hair-strong); background:transparent; color:var(--paper); font-family:var(--mono); font-size:15px; cursor:pointer; transition:color .2s ease, border-color .2s ease, background .2s ease; }
+  .impact-scroll-button:hover{ color:var(--ochre); border-color:var(--ochre); background:var(--ochre-dim); }
+  .impact-scroller{ display:flex; gap:10px; overflow-x:auto; overscroll-behavior-x:contain; scroll-behavior:smooth; scrollbar-width:thin; padding-bottom:12px; }
+  .impact-scroller:focus{ outline:1px solid var(--ochre); outline-offset:5px; }
+  .impact-evidence-card{ flex:0 0 clamp(210px,27vw,280px); min-height:122px; padding:16px; border:1px solid var(--hair); background:rgba(18,22,26,.72); }
+  .impact-evidence-card.alert{ border-color:rgba(201,141,60,.55); background:rgba(201,141,60,.08); }
+  .impact-evidence-type{ font-family:var(--mono); font-size:9px; color:var(--slate); letter-spacing:.08em; margin-bottom:13px; }
+  .impact-evidence-card.alert .impact-evidence-type{ color:var(--ochre); }
+  .impact-evidence-id{ font-family:var(--serif); font-size:20px; color:var(--paper); margin-bottom:8px; }
+  .impact-evidence-detail{ font-family:var(--mono); font-size:10px; line-height:1.6; color:var(--paper-dim); }
+  .impact-evidence-hint{ margin-top:8px; font-family:var(--mono); font-size:9px; color:var(--paper-faint); letter-spacing:.04em; }
   .rec-block{ border-top:1px solid var(--hair-strong); padding-top:36px; margin-top:auto; }
   .rec-label{ font-family:var(--mono); font-size:11px; color:var(--paper-faint); letter-spacing:0.05em; margin-bottom:14px;}
   .rec-text{ font-size:18px; color:var(--paper); max-width:600px; line-height:1.5; margin-bottom:22px; font-family:var(--serif); }
@@ -445,6 +462,8 @@
     .inv-grid{ grid-template-columns:1fr; gap:30px; }
     #scene-investigate .scene-inner{ padding-bottom:36px; }
     .impact-sub{ gap:14px 24px; flex-wrap:wrap; }
+    .impact-evidence{ margin-bottom:30px; }
+    .impact-evidence-card{ flex-basis:230px; }
     .compare-arrow{ display:none; }
     .incident-row{ grid-template-columns:1fr; gap:6px; }
     .compare-block{ gap:20px; }
@@ -513,7 +532,7 @@
         <div class="cc-context">
           <span>FINANCIAL OPERATIONS</span>
           <span class="context-dot"></span>
-          <span>LIVE EXCEPTION QUEUE</span>
+          <span>EXCEPTION QUEUE</span>
         </div>
       </div>
       <div class="cc-period">
@@ -529,9 +548,9 @@
         <div class="summary-note">requiring investigation</div>
       </div>
       <div class="summary-card">
-        <div class="summary-label">FINANCIAL DISCREPANCY</div>
+        <div class="summary-label">OPEN INCIDENT EXPOSURE</div>
         <div class="summary-value" id="cc-impact">—</div>
-        <div class="summary-note">reported vs verified</div>
+        <div class="summary-note">across open incidents</div>
       </div>
       <div class="summary-card">
         <div class="summary-label">INVESTIGATION STATE</div>
@@ -625,6 +644,17 @@
         <div class="impact-mini">Verified <b id="imp-verified"></b></div>
         <div class="impact-mini">Merchant <b id="imp-merchant"></b></div>
       </div>
+    </div>
+    <div class="impact-evidence">
+      <div class="impact-evidence-head">
+        <div class="impact-evidence-label">TRACE · TRANSACTION EVIDENCE</div>
+        <div class="impact-scroller-controls">
+          <button class="impact-scroll-button" type="button" aria-label="Scroll evidence left" onclick="scrollImpactEvidence(-1)">←</button>
+          <button class="impact-scroll-button" type="button" aria-label="Scroll evidence right" onclick="scrollImpactEvidence(1)">→</button>
+        </div>
+      </div>
+      <div class="impact-scroller" id="impact-scroller" tabindex="0" aria-label="Transaction evidence"></div>
+      <div class="impact-evidence-hint">SWIPE OR USE ARROW KEYS TO TRACE THE RECORDS</div>
     </div>
     <div class="rec-block">
       <div class="rec-label">RECOMMENDED ACTION</div>
@@ -779,6 +809,7 @@ function goTo(i){
   sceneLabel.textContent = SCENE_NAMES[i];
   if(scenes[i] === 'scene-cc') renderCommandCenter();
   if(scenes[i] === 'scene-eval') renderEvaluation();
+  if(scenes[i] === 'scene-impact') renderImpact();
   if(scenes[i] === 'scene-investigate') document.getElementById('scene-investigate').scrollTop = 0;
 }
 
@@ -808,6 +839,12 @@ document.addEventListener('wheel', e => {
     const atBottom = investigation.scrollTop + investigation.clientHeight >= investigation.scrollHeight - 1;
     if((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) return;
   }
+  if(current === 4){
+    const impact = document.getElementById('scene-impact');
+    const atTop = impact.scrollTop <= 1;
+    const atBottom = impact.scrollTop + impact.clientHeight >= impact.scrollHeight - 1;
+    if((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) return;
+  }
   if(e.target.closest('.incident-list')) return;
   if(Math.abs(e.deltaY) < 10) return;
   if(wheelLocked) return;
@@ -827,6 +864,12 @@ document.addEventListener('touchend', e => {
     const investigation = document.getElementById('scene-investigate');
     const atTop = investigation.scrollTop <= 1;
     const atBottom = investigation.scrollTop + investigation.clientHeight >= investigation.scrollHeight - 1;
+    if((distance > 0 && !atBottom) || (distance < 0 && !atTop)) return;
+  }
+  if(current === 4){
+    const impact = document.getElementById('scene-impact');
+    const atTop = impact.scrollTop <= 1;
+    const atBottom = impact.scrollTop + impact.clientHeight >= impact.scrollHeight - 1;
     if((distance > 0 && !atBottom) || (distance < 0 && !atTop)) return;
   }
   if(distance > 0) nextScene(); else previousScene();
@@ -964,8 +1007,8 @@ function revealEvidence(){
   const trail = document.getElementById('evidence-trail');
   const nodes = [
     { label:'INCIDENT', detail: `${activeIncident.incident_id} · discrepancy ${formatMoney(activeIncident.currency, activeIncident.discrepancy)}` },
-    { label:'AFFECTED PAYMENT', detail: activeIncident.evidence.payments.map(p=>`${p.payment_id} · ${formatMoney(p.currency || activeIncident.currency, p.amount)} · ${p.status} · ${p.timestamp}`).join('<br>') },
-    { label:'LEDGER ENTRY', detail: activeIncident.evidence.ledger_entries.map(e=>`${e.entry_id} · ${e.entry_type} · ${e.direction} · ${formatMoney(e.currency || activeIncident.currency, e.amount)} · ${e.timestamp}`).join('<br>') },
+    { label:'PAYMENTS TRACED IN SCOPE', detail: activeIncident.evidence.payments.map(p=>`${p.payment_id} · ${formatMoney(p.currency || activeIncident.currency, p.amount)} · ${p.status} · ${p.timestamp}`).join('<br>') },
+    { label:'LEDGER ENTRIES TRACED', detail: activeIncident.evidence.ledger_entries.map(e=>`${e.entry_id} · ${e.entry_type} · ${e.direction} · ${formatMoney(e.currency || activeIncident.currency, e.amount)} · ${e.timestamp}`).join('<br>') },
     { label:'VERIFIED FINANCIAL EVIDENCE', detail: 'Independently reconciled against the ledger — not derived from the dashboard' }
   ];
   nodes.forEach((n,idx)=>{
@@ -1036,7 +1079,8 @@ document.getElementById('support-list').innerHTML =
   document.getElementById('imp-reported').textContent = formatMoney(activeIncident.currency, activeIncident.actual_revenue);
   document.getElementById('imp-verified').textContent = formatMoney(activeIncident.currency, activeIncident.expected_revenue);
   document.getElementById('imp-merchant').textContent = activeIncident.merchant_name;
-  document.getElementById('rec-text').textContent = recommendationFor(r.root_cause_category);
+  document.getElementById('rec-text').textContent =
+  r.recommended_action || 'Route to manual review — no recommendation was returned.';
   document.getElementById('audit-log').classList.remove('show');
   document.getElementById('audit-log').innerHTML = '';
   document.getElementById('approval-row').style.display = 'flex';
@@ -1050,11 +1094,53 @@ document.getElementById('support-list').innerHTML =
   approveBtn.style.display = uncertain ? 'none' : 'inline-flex';
 }
 
-function recommendationFor(category){
-  if(category==='missing_refund') return 'Reprocess the affected refund into the revenue pipeline and refresh downstream dashboards for this merchant and period.';
-  if(category==='duplicate_payment') return 'Remove the duplicated payment entry from the revenue aggregation and refresh downstream dashboards for this merchant and period.';
-  return 'Route to manual review — evidence is insufficient for an automated recommendation.';
+function renderImpact(){
+  const scroller = document.getElementById('impact-scroller');
+  if(!scroller || !activeIncident || !activeIncident.evidence){
+    if(scroller) scroller.innerHTML = '';
+    return;
+  }
+  const result = activeIncident.ai_result || {};
+  document.getElementById('impact-num').textContent = formatMoney(activeIncident.currency, activeIncident.discrepancy);
+  document.getElementById('imp-reported').textContent = formatMoney(activeIncident.currency, activeIncident.actual_revenue);
+  document.getElementById('imp-verified').textContent = formatMoney(activeIncident.currency, activeIncident.expected_revenue);
+  document.getElementById('imp-merchant').textContent = activeIncident.merchant_name;
+  document.getElementById('rec-text').textContent = result.recommended_action || 'Route to manual review — no recommendation was returned.';
+  const evidence = activeIncident.evidence;
+  const paymentCards = (evidence.payments || []).map(payment => ({
+    type: 'PAYMENTS TRACED IN SCOPE',
+    id: payment.payment_id,
+    detail: `${formatMoney(payment.currency || activeIncident.currency, payment.amount)} · ${payment.status}`,
+    alert: payment.payment_id === 'pay_1'
+  }));
+  const ledgerCards = (evidence.ledger_entries || []).map(entry => ({
+    type: 'LEDGER ENTRIES TRACED',
+    id: entry.entry_id,
+    detail: `${entry.entry_type} · ${entry.direction} · ${formatMoney(entry.currency || activeIncident.currency, entry.amount)}`,
+    alert: entry.payment_id === 'pay_1' && entry.entry_type === 'payment'
+  }));
+  scroller.innerHTML = paymentCards.concat(ledgerCards).map(card => `
+    <article class="impact-evidence-card${card.alert ? ' alert' : ''}">
+      <div class="impact-evidence-type">${card.type}</div>
+      <div class="impact-evidence-id">${card.id}</div>
+      <div class="impact-evidence-detail">${card.detail}</div>
+    </article>
+  `).join('');
 }
+
+function scrollImpactEvidence(direction){
+  const scroller = document.getElementById('impact-scroller');
+  if(scroller) scroller.scrollBy({left: direction * Math.max(240, scroller.clientWidth * .7), behavior:'smooth'});
+}
+
+document.getElementById('impact-scroller')?.addEventListener('keydown', event => {
+  if(event.key === 'ArrowLeft' || event.key === 'ArrowRight'){
+    event.preventDefault();
+    scrollImpactEvidence(event.key === 'ArrowRight' ? 1 : -1);
+  }
+});
+
+
 
 /* ===================== APPROVAL / AUDIT ===================== */
 function approve(){
@@ -1094,8 +1180,7 @@ function review(){
       </div>
       <div class="review-section">
         <div class="review-section-label">PROPOSED ACTION</div>
-        <div class="review-proposal">${recommendationFor(activeIncident.ai_result.root_cause_category)}</div>
-      </div>
+<div class="review-proposal">${activeIncident.ai_result.recommended_action || 'Route to manual review — no recommendation was returned.'}</div>      </div>
       <div class="review-section-label" style="margin-top:22px;">REVIEWER DECISION REQUIRED</div>
       <div class="review-actions">${decisionControls}<button class="review-link" onclick="goTo(3)">Return to investigation evidence →</button></div>
     </div>
@@ -1170,7 +1255,7 @@ function renderEvaluation(){
             style="width:${b.accuracy}%">
           </div>
         </div>
-
+ 
       </div>
 
     `).join('');
@@ -1205,7 +1290,7 @@ fetch('fintrace_data.json', {cache:'no-store'})
     dataLoading = false;
     if(json.incidents && json.incidents.length){
       DATA = json;
-statusEl.textContent = 'FINTRACE · LIVE';
+statusEl.textContent = 'FINTRACE · DATA CONNECTED';
       statusEl.style.color = 'var(--green)';
     } else {
 statusEl.textContent = 'FINTRACE · NO INCIDENTS';

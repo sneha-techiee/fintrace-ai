@@ -1,227 +1,425 @@
 {
-  "generated_at": "2026-09-04T16:50:34.728468",
+  "generated_at": "2026-09-05T12:48:55.309789",
   "incidents": [
     {
       "incident_id": "duplicate_payment_incident_1",
-      "merchant_id": "merch_3",
-      "merchant_name": "Hancock, Hartman and Smith",
+      "merchant_id": "merch_1",
+      "merchant_name": "Rodriguez, Figueroa and Sanchez",
       "incident_type": "duplicate_payment",
-      "expected_revenue": "9854.67",
-      "actual_revenue": "19709.34",
-      "discrepancy": "9854.67",
+      "expected_revenue": "1201.86",
+      "actual_revenue": "8619.95",
+      "discrepancy": "7418.09",
       "currency": "INR",
       "severity": "high",
       "period": "June 2026",
       "evidence": {
         "incident": {
           "incident_id": "incident_1",
-          "merchant_id": "merch_3",
+          "merchant_id": "merch_1",
           "incident_type": "duplicate_payment",
-          "expected_revenue": "9854.67",
-          "actual_revenue": "19709.34",
-          "discrepancy": "9854.67",
+          "expected_revenue": "1201.86",
+          "actual_revenue": "8619.95",
+          "discrepancy": "7418.09",
           "currency": "INR",
           "severity": "high"
         },
         "payments": [
           {
             "payment_id": "pay_1",
-            "merchant_id": "merch_3",
-            "amount": "9854.67",
+            "merchant_id": "merch_1",
+            "amount": "7418.09",
             "currency": "INR",
             "status": "completed",
-            "timestamp": "2026-06-09T01:43:43"
+            "timestamp": "2026-06-11T16:49:54"
           },
           {
             "payment_id": "pay_12",
-            "merchant_id": "merch_3",
-            "amount": "8332.17",
+            "merchant_id": "merch_1",
+            "amount": "8476.47",
             "currency": "INR",
-            "status": "failed",
-            "timestamp": "2026-06-27T08:24:07"
+            "status": "completed",
+            "timestamp": "2026-06-17T08:09:39"
           },
           {
             "payment_id": "pay_14",
-            "merchant_id": "merch_3",
-            "amount": "3826.97",
+            "merchant_id": "merch_1",
+            "amount": "797.21",
             "currency": "INR",
-            "status": "ongoing",
-            "timestamp": "2026-06-01T03:49:08"
-          },
-          {
-            "payment_id": "pay_19",
-            "merchant_id": "merch_3",
-            "amount": "1551.06",
-            "currency": "INR",
-            "status": "failed",
-            "timestamp": "2026-06-28T06:22:14"
+            "status": "completed",
+            "timestamp": "2026-06-05T12:03:24"
           }
         ],
         "ledger_entries": [
           {
             "entry_id": "entry_1",
             "payment_id": "pay_1",
-            "merchant_id": "merch_3",
+            "merchant_id": "merch_1",
             "entry_type": "payment",
-            "amount": "9854.67",
+            "amount": "7418.09",
             "currency": "INR",
-            "timestamp": "2026-06-09T01:43:43",
+            "timestamp": "2026-06-11T16:49:54",
             "direction": "credit"
+          },
+          {
+            "entry_id": "entry_10",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "2456.12",
+            "currency": "INR",
+            "timestamp": "2026-06-20T21:20:38",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_11",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "990.24",
+            "currency": "INR",
+            "timestamp": "2026-06-13T14:44:09",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_12",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "84.51",
+            "currency": "INR",
+            "timestamp": "2026-06-19T17:38:02",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_13",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "12.42",
+            "currency": "INR",
+            "timestamp": "2026-06-23T01:23:31",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_2",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "payment",
+            "amount": "8476.47",
+            "currency": "INR",
+            "timestamp": "2026-06-17T08:09:39",
+            "direction": "credit"
+          },
+          {
+            "entry_id": "entry_3",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "payment",
+            "amount": "797.21",
+            "currency": "INR",
+            "timestamp": "2026-06-05T12:03:24",
+            "direction": "credit"
+          },
+          {
+            "entry_id": "entry_4",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "8351.20",
+            "currency": "INR",
+            "timestamp": "2026-06-25T16:31:46",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_5",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "2819.82",
+            "currency": "INR",
+            "timestamp": "2026-06-26T08:31:39",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_6",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "664.96",
+            "currency": "INR",
+            "timestamp": "2026-06-18T08:14:44",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_7",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "44.51",
+            "currency": "INR",
+            "timestamp": "2026-06-18T09:28:21",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_8",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "56.68",
+            "currency": "INR",
+            "timestamp": "2026-06-28T11:47:42",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_9",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "9.45",
+            "currency": "INR",
+            "timestamp": "2026-06-11T13:29:22",
+            "direction": "debit"
           }
         ]
       },
       "ai_result": {
         "incident_id": "incident_1",
-        "merchant_id": "merch_3",
-        "discrepancy": "9854.67",
+        "merchant_id": "merch_1",
+        "discrepancy": "7418.09",
         "currency": "INR",
         "severity": "high",
         "root_cause_category": "duplicate_payment",
-        "root_cause": "A completed payment was erroneously counted twice in the actual revenue calculation.",
-        "explanation": "The discrepancy of 9854.67 INR is precisely equal to the amount of a completed payment, pay_1. The expected revenue of 9854.67 INR, when added to the amount of pay_1 (9854.67 INR), exactly equals the actual revenue of 19709.34 INR. Furthermore, pay_1 is recorded in the ledger by entry_1, confirming its initial, correct inclusion. This strong arithmetic relationship, coupled with the existence of a corresponding ledger entry for the payment, indicates that pay_1 was counted an additional time, leading to the inflated actual revenue.",
+        "root_cause": "A completed payment was erroneously counted an additional time in the actual revenue calculation for merchant 'merch_1'.",
+        "explanation": "The discrepancy of 7418.09 INR, where actual revenue is higher than expected revenue, is precisely matched by the amount of payment 'pay_1'. Investigation reveals that the sum of the expected revenue (1201.86 INR) and the amount of payment 'pay_1' (7418.09 INR) perfectly equals the actual revenue (8619.95 INR). This indicates that payment 'pay_1' was likely included once correctly in the expected revenue and then counted an additional time, leading to the inflated actual revenue. Payment 'pay_1' has a corresponding ledger entry ('entry_1') confirming its legitimate processing, supporting the theory that its *recounting* is the issue.",
         "evidence": [
-          "The incident reports an expected revenue of '9854.67 INR' and an actual revenue of '19709.34 INR' for merchant 'merch_3'.",
-          "The discrepancy is calculated as 'actual_revenue' ('19709.34 INR') - 'expected_revenue' ('9854.67 INR') = '9854.67 INR'.",
-          "Payment 'pay_1' for merchant 'merch_3' has an 'amount' of '9854.67 INR' and a 'status' of 'completed'.",
-          "Ledger entry 'entry_1' corresponds to 'payment_id' 'pay_1', 'entry_type' 'payment', 'amount' '9854.67 INR', and 'direction' 'credit'.",
-          "The arithmetic relationship 'expected_revenue' ('9854.67 INR') + 'payment_amount' ('pay_1': '9854.67 INR') = 'actual_revenue' ('19709.34 INR') holds true."
+          "The incident reports an expected revenue of 1201.86 INR and an actual revenue of 8619.95 INR, resulting in a positive discrepancy of 7418.09 INR (8619.95 - 1201.86 = 7418.09).",
+          "Payment 'pay_1' for merchant 'merch_1' has an amount of 7418.09 INR and a 'completed' status, which exactly matches the discrepancy amount.",
+          "Ledger entry 'entry_1' explicitly records a 'payment' credit for 'pay_1' with an amount of 7418.09 INR, confirming that this payment was processed and accounted for.",
+          "The arithmetic relationship expected_revenue (1201.86 INR) + payment_amount_of_pay_1 (7418.09 INR) = 8619.95 INR, which precisely equals the reported actual_revenue. This strongly supports that 'pay_1' was counted once and then counted again, causing the discrepancy."
         ],
-        "confidence": "high"
+        "confidence": "high",
+        "recommended_action": "Manually review the revenue aggregation process for merchant 'merch_1' to identify the source of the duplicate counting for payment 'pay_1' (7418.09 INR). Adjust the actual revenue for incident 'incident_1' by deducting 7418.09 INR to correct the duplicate entry. This action requires human approval before execution."
       }
     },
     {
       "incident_id": "missing_refund_incident_1",
-      "merchant_id": "merch_4",
-      "merchant_name": "Carter-Wiley",
+      "merchant_id": "merch_1",
+      "merchant_name": "Rodriguez, Figueroa and Sanchez",
       "incident_type": "missing_refund",
-      "expected_revenue": "503.52",
-      "actual_revenue": "1410.12",
-      "discrepancy": "906.60",
-      "currency": "USD",
+      "expected_revenue": "1201.86",
+      "actual_revenue": "4021.68",
+      "discrepancy": "2819.82",
+      "currency": "INR",
       "severity": "high",
       "period": "June 2026",
       "evidence": {
         "incident": {
           "incident_id": "incident_1",
-          "merchant_id": "merch_4",
+          "merchant_id": "merch_1",
           "incident_type": "missing_refund",
-          "expected_revenue": "503.52",
-          "actual_revenue": "1410.12",
-          "discrepancy": "906.60",
-          "currency": "USD",
+          "expected_revenue": "1201.86",
+          "actual_revenue": "4021.68",
+          "discrepancy": "2819.82",
+          "currency": "INR",
           "severity": "high"
         },
         "payments": [
           {
-            "payment_id": "pay_3",
-            "merchant_id": "merch_4",
-            "amount": "4607.05",
-            "currency": "USD",
-            "status": "ongoing",
-            "timestamp": "2026-06-21T00:28:02"
-          },
-          {
-            "payment_id": "pay_5",
-            "merchant_id": "merch_4",
-            "amount": "2566.51",
-            "currency": "USD",
-            "status": "ongoing",
-            "timestamp": "2026-06-21T05:01:36"
-          },
-          {
-            "payment_id": "pay_11",
-            "merchant_id": "merch_4",
-            "amount": "5786.82",
-            "currency": "USD",
-            "status": "ongoing",
-            "timestamp": "2026-06-11T18:04:03"
-          },
-          {
-            "payment_id": "pay_17",
-            "merchant_id": "merch_4",
-            "amount": "2421.30",
-            "currency": "USD",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
+            "amount": "7418.09",
+            "currency": "INR",
             "status": "completed",
-            "timestamp": "2026-06-28T07:15:19"
+            "timestamp": "2026-06-11T16:49:54"
           },
           {
-            "payment_id": "pay_18",
-            "merchant_id": "merch_4",
-            "amount": "3458.57",
-            "currency": "USD",
-            "status": "failed",
-            "timestamp": "2026-06-07T10:13:54"
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "amount": "8476.47",
+            "currency": "INR",
+            "status": "completed",
+            "timestamp": "2026-06-17T08:09:39"
+          },
+          {
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "amount": "797.21",
+            "currency": "INR",
+            "status": "completed",
+            "timestamp": "2026-06-05T12:03:24"
           }
         ],
         "ledger_entries": [
           {
-            "entry_id": "entry_5",
-            "payment_id": "pay_17",
-            "merchant_id": "merch_4",
+            "entry_id": "entry_1",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
             "entry_type": "payment",
-            "amount": "2421.30",
-            "currency": "USD",
-            "timestamp": "2026-06-28T07:15:19",
+            "amount": "7418.09",
+            "currency": "INR",
+            "timestamp": "2026-06-11T16:49:54",
             "direction": "credit"
           },
           {
-            "entry_id": "entry_9",
-            "payment_id": "pay_17",
-            "merchant_id": "merch_4",
+            "entry_id": "entry_10",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
             "entry_type": "refund",
-            "amount": "906.60",
-            "currency": "USD",
-            "timestamp": "2026-06-30T06:05:45",
+            "amount": "2456.12",
+            "currency": "INR",
+            "timestamp": "2026-06-20T21:20:38",
             "direction": "debit"
           },
           {
-            "entry_id": "entry_14",
-            "payment_id": "pay_17",
-            "merchant_id": "merch_4",
+            "entry_id": "entry_11",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
             "entry_type": "refund",
-            "amount": "1011.18",
-            "currency": "USD",
-            "timestamp": "2026-06-30T01:09:22",
+            "amount": "990.24",
+            "currency": "INR",
+            "timestamp": "2026-06-13T14:44:09",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_12",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "84.51",
+            "currency": "INR",
+            "timestamp": "2026-06-19T17:38:02",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_13",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "12.42",
+            "currency": "INR",
+            "timestamp": "2026-06-23T01:23:31",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_2",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "payment",
+            "amount": "8476.47",
+            "currency": "INR",
+            "timestamp": "2026-06-17T08:09:39",
+            "direction": "credit"
+          },
+          {
+            "entry_id": "entry_3",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "payment",
+            "amount": "797.21",
+            "currency": "INR",
+            "timestamp": "2026-06-05T12:03:24",
+            "direction": "credit"
+          },
+          {
+            "entry_id": "entry_4",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "8351.20",
+            "currency": "INR",
+            "timestamp": "2026-06-25T16:31:46",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_5",
+            "payment_id": "pay_1",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "2819.82",
+            "currency": "INR",
+            "timestamp": "2026-06-26T08:31:39",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_6",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "664.96",
+            "currency": "INR",
+            "timestamp": "2026-06-18T08:14:44",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_7",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "44.51",
+            "currency": "INR",
+            "timestamp": "2026-06-18T09:28:21",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_8",
+            "payment_id": "pay_12",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "56.68",
+            "currency": "INR",
+            "timestamp": "2026-06-28T11:47:42",
+            "direction": "debit"
+          },
+          {
+            "entry_id": "entry_9",
+            "payment_id": "pay_14",
+            "merchant_id": "merch_1",
+            "entry_type": "refund",
+            "amount": "9.45",
+            "currency": "INR",
+            "timestamp": "2026-06-11T13:29:22",
             "direction": "debit"
           }
         ]
       },
       "ai_result": {
         "incident_id": "incident_1",
-        "merchant_id": "merch_4",
-        "discrepancy": "906.60",
-        "currency": "USD",
+        "merchant_id": "merch_1",
+        "discrepancy": "2819.82",
+        "currency": "INR",
         "severity": "high",
         "root_cause_category": "missing_refund",
-        "root_cause": "A processed refund was not correctly deducted when calculating the actual revenue.",
-        "explanation": "The actual revenue reported is higher than the expected revenue by 906.60 USD. Investigation of the ledger entries reveals a refund (entry_9) for the exact amount of 906.60 USD associated with payment pay_17. This refund, identified as a debit, was likely processed but its deduction was omitted during the aggregation of actual revenue, leading to the observed overstatement.",
+        "root_cause": "A completed refund was not properly deducted from the actual revenue calculation.",
+        "explanation": "The actual revenue is higher than the expected revenue by exactly the amount of a specific refund. This suggests that the refund was processed and recorded in the ledger, but its amount was not subtracted when computing the total actual revenue, leading to an overstatement of revenue.",
         "evidence": [
-          "The incident details indicate a discrepancy of 906.60 USD (1410.12 USD actual revenue - 503.52 USD expected revenue = 906.60 USD discrepancy).",
-          "Ledger entry entry_9 for merchant merch_4 records a refund (entry_type: 'refund') with an amount of 906.60 USD, corresponding to payment_id pay_17, and a direction of 'debit'.",
-          "This refund amount (906.60 USD) precisely matches the calculated discrepancy.",
-          "The arithmetic relationship actual_revenue - refund_amount = expected_revenue holds true: 1410.12 USD (actual_revenue) - 906.60 USD (refund from entry_9) = 503.52 USD (expected_revenue)."
+          "The incident reports an expected revenue of INR 1201.86 and an actual revenue of INR 4021.68, resulting in a discrepancy of INR 2819.82 (4021.68 - 1201.86 = 2819.82).",
+          "Ledger entry entry_5 records a 'refund' for payment_id 'pay_1' with an amount of INR 2819.82 and a 'debit' direction, indicating a successful refund transaction.",
+          "The amount of this refund (INR 2819.82) precisely matches the discrepancy (INR 2819.82).",
+          "Subtracting the refund amount from the actual revenue yields the expected revenue: INR 4021.68 (actual revenue) - INR 2819.82 (refund from entry_5) = INR 1201.86 (expected revenue).",
+          "Payment pay_1 is listed as 'completed' for INR 7418.09, and its corresponding payment ledger entry_1 also confirms a 'payment' credit for INR 7418.09, indicating the original payment was successfully recorded before the refund."
         ],
-        "confidence": "high"
+        "confidence": "high",
+        "recommended_action": "Investigate the revenue calculation logic to identify why ledger entry 'entry_5' (refund of INR 2819.82 for payment 'pay_1') was not deducted from the actual revenue. Correct the revenue calculation process to ensure all valid refunds are accurately accounted for, then re-calculate the merchant's actual revenue for the period and reconcile with expected figures. This action requires human approval."
       }
     }
   ],
   "evaluation": {
-    "total": 2,
-    "passed": 2,
+    "total": 12,
+    "passed": 12,
     "failed": 0,
     "accuracy": 100.0,
     "breakdown": [
       {
         "incident_type": "duplicate_payment",
-        "total": 1,
-        "passed": 1,
+        "total": 6,
+        "passed": 6,
         "failed": 0,
         "accuracy": 100.0
       },
       {
         "incident_type": "missing_refund",
-        "total": 1,
-        "passed": 1,
+        "total": 6,
+        "passed": 6,
         "failed": 0,
         "accuracy": 100.0
       }

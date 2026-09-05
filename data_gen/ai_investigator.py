@@ -245,7 +245,25 @@ IMPORTANT RULES
    the supplied financial records.
 
 10. Return ONLY valid JSON.
+==================================================
+RECOMMENDED ACTION
+==================================================
 
+Based on your investigation, recommend ONE specific,
+bounded corrective action.
+
+The action must:
+- directly address the identified root cause
+- be supported by the supplied evidence
+- require human approval before execution
+- not claim that the action has already been executed
+- not invent systems, tools, or capabilities that are not present
+- be conservative if confidence is low or evidence is insufficient
+
+If the evidence is insufficient, recommend keeping the
+incident open for manual investigation.
+
+==================================================
 ==================================================
 EXPECTED JSON
 ==================================================
@@ -260,7 +278,8 @@ EXPECTED JSON
     "root_cause": "string",
     "explanation": "string",
     "evidence": ["string"],
-    "confidence": "high | medium | low"
+    "confidence": "high | medium | low",
+    "recommended_action": "string"
 }}
 
 ==================================================

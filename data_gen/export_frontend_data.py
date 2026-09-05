@@ -3,12 +3,17 @@ import os
 from datetime import datetime
 from decimal import Decimal
 
-from data_gen.models import Refund
+from data_gen.models import Incident
 from data_gen.incident_registry import INCIDENT_SIMULATORS
-from data_gen.generate_merchants import generate_merchants
-from data_gen.generate_payments import generate_payments
-from data_gen.generate_refunds import generate_refunds
-from data_gen.generate_ledger import generate_ledger_entries
+from database import (
+    initialize_database,
+    get_merchants,
+    get_payments,
+    get_refunds,
+    get_ledger_entries,
+    get_incidents,
+    insert_incidents
+)
 from data_gen.calculate_ledger_truth import calculate_ledger_truth
 from data_gen.generate_dashboard_metrics import generate_dashboard_metrics
 from data_gen.detect_incidents import detect_incidents
@@ -30,43 +35,31 @@ INCIDENT_TYPES = [
 
 def run_scenario(incident_type):
 
-    merchants = generate_merchants()
+    # ---------------------------------------------------------
+    # Load the financial state from SQLite.
+    #
+    # SQLite is now the source of truth for the generated
+    # merchants, payments, refunds and ledger entries.
+    # ---------------------------------------------------------
 
-    payments = generate_payments(
-        merchants,
-        20
-    )
+    merchants = get_merchants()
+    payments = get_payments()
+    refunds = get_refunds()
+    ledger_entries = get_ledger_entries()
+    incidents = get_incidents()
 
-    # Guarantee one valid completed payment
-    # without revealing the incident type to the AI.
-    payments[0].status = "completed"
+    if not merchants:
+        raise RuntimeError("No merchants found in SQLite.")
 
-    refunds = generate_refunds(
-        payments,
-        10,
-        PERIOD_END
-    )
+    if not payments:
+        raise RuntimeError("No payments found in SQLite.")
 
-    # Guarantee one valid refund for the
-    # missing-refund scenario before truth is calculated.
-    if incident_type == "missing_refund":
+    if not ledger_entries:
+        raise RuntimeError("No ledger entries found in SQLite.")
 
-        guaranteed_refund = Refund(
-            refund_id="demo_refund_1",
-            payment_id=payments[0].payment_id,
-            merchant_id=payments[0].merchant_id,
-            amount=Decimal("10.00"),
-            status="completed",
-            currency=payments[0].currency,
-            timestamp=datetime(2026, 6, 15)
-        )
-
-        refunds.append(guaranteed_refund)
-
-    ledger_entries = generate_ledger_entries(
-        payments,
-        refunds
-    )
+    # ---------------------------------------------------------
+    # Calculate independent ledger truth from persisted data.
+    # ---------------------------------------------------------
 
     ledger_truth = calculate_ledger_truth(
         ledger_entries,
@@ -74,12 +67,24 @@ def run_scenario(incident_type):
         PERIOD_END
     )
 
+    # ---------------------------------------------------------
+    # Build the clean dashboard from ledger truth.
+    #
+    # We intentionally do NOT read the stored dashboard metric
+    # here because database.py currently stores the injected
+    # duplicate-payment dashboard value.
+    # ---------------------------------------------------------
+
     dashboard_metrics = generate_dashboard_metrics(
         ledger_truth,
         merchants,
         PERIOD_START,
         PERIOD_END
     )
+
+    # ---------------------------------------------------------
+    # Inject the requested test scenario.
+    # ---------------------------------------------------------
 
     simulator = INCIDENT_SIMULATORS.get(incident_type)
 
@@ -103,6 +108,10 @@ def run_scenario(incident_type):
             f"Could not create {incident_type} scenario."
         )
 
+    # ---------------------------------------------------------
+    # Detect incident against independent ledger truth.
+    # ---------------------------------------------------------
+
     incidents = detect_incidents(
         ledger_truth,
         faulty_dashboard_metrics,
@@ -116,6 +125,10 @@ def run_scenario(incident_type):
 
     incident = incidents[0]
 
+    # ---------------------------------------------------------
+    # Trace transaction-level evidence from persisted data.
+    # ---------------------------------------------------------
+
     evidence = gather_evidence(
         incident,
         payments,
@@ -127,6 +140,10 @@ def run_scenario(incident_type):
     structured_evidence = build_investigation_evidence(
         evidence
     )
+
+    # ---------------------------------------------------------
+    # AI investigates the structured evidence.
+    # ---------------------------------------------------------
 
     ai_result = investigate_with_ai(
         structured_evidence
@@ -141,16 +158,35 @@ def run_scenario(incident_type):
         incident.merchant_id
     )
 
-    # ---------------------------------------------------------
-    # Give every exported scenario a globally meaningful ID.
-    #
-    # detect_incidents() starts numbering from incident_1 for
-    # every independent run, so we add the scenario identity here.
-    # ---------------------------------------------------------
-
     exported_incident_id = (
         f"{incident_type}_{incident.incident_id}"
     )
+
+    # ---------------------------------------------------------
+    # Persist the detected incident in SQLite.
+    # ---------------------------------------------------------
+
+    persisted_incident = Incident(
+        incident_id=exported_incident_id,
+        merchant_id=incident.merchant_id,
+        incident_type=incident.incident_type,
+        expected_revenue=incident.expected_revenue,
+        actual_revenue=incident.actual_revenue,
+        discrepancy=incident.discrepancy,
+        currency=incident.currency,
+        severity=incident.severity,
+    )
+
+    existing_incident_ids = {
+        stored_incident.incident_id
+        for stored_incident in get_incidents()
+    }
+
+    if exported_incident_id not in existing_incident_ids:
+        insert_incidents([persisted_incident])
+        print(
+            f"✓ Persisted incident: {exported_incident_id}"
+        )
 
     return {
         "incident_id": exported_incident_id,
@@ -166,6 +202,135 @@ def run_scenario(incident_type):
         "evidence": structured_evidence,
         "ai_result": ai_result,
     }
+    # # Guarantee one valid completed payment
+    # # without revealing the incident type to the AI.
+    # payments[0].status = "completed"
+
+    # refunds = generate_refunds(
+    #     payments,
+    #     10,
+    #     PERIOD_END
+    # )
+
+    # # Guarantee one valid refund for the
+    # # missing-refund scenario before truth is calculated.
+    # if incident_type == "missing_refund":
+
+    #     guaranteed_refund = Refund(
+    #         refund_id="demo_refund_1",
+    #         payment_id=payments[0].payment_id,
+    #         merchant_id=payments[0].merchant_id,
+    #         amount=Decimal("10.00"),
+    #         status="completed",
+    #         currency=payments[0].currency,
+    #         timestamp=datetime(2026, 6, 15)
+    #     )
+
+    #     refunds.append(guaranteed_refund)
+
+    # ledger_entries = generate_ledger_entries(
+    #     payments,
+    #     refunds
+    # )
+
+    # ledger_truth = calculate_ledger_truth(
+    #     ledger_entries,
+    #     PERIOD_START,
+    #     PERIOD_END
+    # )
+
+    # dashboard_metrics = generate_dashboard_metrics(
+    #     ledger_truth,
+    #     merchants,
+    #     PERIOD_START,
+    #     PERIOD_END
+    # )
+
+    # simulator = INCIDENT_SIMULATORS.get(incident_type)
+
+    # if simulator is None:
+    #     raise ValueError(
+    #         f"Unknown incident type: {incident_type}"
+    #     )
+
+    # faulty_dashboard_metrics, injected_incident_type = simulator(
+    #     dashboard_metrics,
+    #     merchants,
+    #     payments,
+    #     refunds,
+    #     ledger_entries,
+    #     PERIOD_START,
+    #     PERIOD_END
+    # )
+
+    # if injected_incident_type is None:
+    #     raise RuntimeError(
+    #         f"Could not create {incident_type} scenario."
+    #     )
+
+    # incidents = detect_incidents(
+    #     ledger_truth,
+    #     faulty_dashboard_metrics,
+    #     injected_incident_type
+    # )
+
+    # if not incidents:
+    #     raise RuntimeError(
+    #         "No financial incident was detected."
+    #     )
+
+    # incident = incidents[0]
+
+    # evidence = gather_evidence(
+    #     incident,
+    #     payments,
+    #     ledger_entries,
+    #     PERIOD_START,
+    #     PERIOD_END
+    # )
+
+    # structured_evidence = build_investigation_evidence(
+    #     evidence
+    # )
+
+    # ai_result = investigate_with_ai(
+    #     structured_evidence
+    # )
+
+    # merchant_name = next(
+    #     (
+    #         merchant.name
+    #         for merchant in merchants
+    #         if merchant.merchant_id == incident.merchant_id
+    #     ),
+    #     incident.merchant_id
+    # )
+
+    # # ---------------------------------------------------------
+    # # Give every exported scenario a globally meaningful ID.
+    # #
+    # # detect_incidents() starts numbering from incident_1 for
+    # # every independent run, so we add the scenario identity here.
+    # # ---------------------------------------------------------
+
+    # exported_incident_id = (
+    #     f"{incident_type}_{incident.incident_id}"
+    # )
+
+    # return {
+    #     "incident_id": exported_incident_id,
+    #     "merchant_id": incident.merchant_id,
+    #     "merchant_name": merchant_name,
+    #     "incident_type": incident.incident_type,
+    #     "expected_revenue": str(incident.expected_revenue),
+    #     "actual_revenue": str(incident.actual_revenue),
+    #     "discrepancy": str(incident.discrepancy),
+    #     "currency": incident.currency,
+    #     "severity": incident.severity,
+    #     "period": "June 2026",
+    #     "evidence": structured_evidence,
+    #     "ai_result": ai_result,
+    # }
 
 
 def load_evaluation_summary():
@@ -278,6 +443,8 @@ def load_evaluation_summary():
 
 
 def main():
+
+    initialize_database()
 
     output = {
         "generated_at": datetime.now().isoformat(),

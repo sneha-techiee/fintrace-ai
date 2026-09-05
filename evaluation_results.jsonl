@@ -1,2 +1,0 @@
-{"incident_type": "duplicate_payment", "expected": "duplicate_payment", "predicted": "duplicate_payment", "confidence": "high", "incident_id": "incident_1", "passed": true, "logged_at": "2026-09-04T11:17:52.895732+00:00"}
-{"incident_type": "missing_refund", "expected": "missing_refund", "predicted": "missing_refund", "confidence": "high", "incident_id": "incident_1", "passed": true, "logged_at": "2026-09-04T11:18:09.499603+00:00"}

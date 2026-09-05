@@ -1,7 +1,18 @@
 import random
 import sqlite3
-
+from datetime import datetime
+from decimal import Decimal
 from faker import Faker
+
+from data_gen.models import (
+    Merchant,
+    Payment,
+    Refund,
+    Settlement,
+    LedgerEntry,
+    DashboardMetric,
+    Incident
+)
 
 
 DB_PATH = "fintrace.db"
@@ -259,6 +270,176 @@ def insert_incidents(incidents):
 
     conn.commit()
     conn.close()
+def get_merchants():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT merchant_id, name, category, currency, onboarded_at
+        FROM merchants
+        ORDER BY merchant_id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        Merchant(
+            merchant_id=row[0],
+            name=row[1],
+            category=row[2],
+            currency=row[3],
+            onboarded_at=datetime.fromisoformat(row[4])
+        )
+        for row in rows
+    ]
+
+
+def get_payments():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT payment_id, merchant_id, amount, currency, status, timestamp
+        FROM payments
+        ORDER BY payment_id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        Payment(
+            payment_id=row[0],
+            merchant_id=row[1],
+            amount=Decimal(row[2]),
+            currency=row[3],
+            status=row[4],
+            timestamp=datetime.fromisoformat(row[5])
+        )
+        for row in rows
+    ]
+
+
+def get_refunds():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT refund_id, payment_id, merchant_id, amount,
+               status, currency, timestamp
+        FROM refunds
+        ORDER BY refund_id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        Refund(
+            refund_id=row[0],
+            payment_id=row[1],
+            merchant_id=row[2],
+            amount=Decimal(row[3]),
+            status=row[4],
+            currency=row[5],
+            timestamp=datetime.fromisoformat(row[6])
+        )
+        for row in rows
+    ]
+
+
+def get_ledger_entries():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT entry_id, payment_id, merchant_id, entry_type,
+               amount, currency, timestamp, direction
+        FROM ledger_entries
+        ORDER BY entry_id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        LedgerEntry(
+            entry_id=row[0],
+            payment_id=row[1],
+            merchant_id=row[2],
+            entry_type=row[3],
+            amount=Decimal(row[4]),
+            currency=row[5],
+            timestamp=datetime.fromisoformat(row[6]),
+            direction=row[7]
+        )
+        for row in rows
+    ]
+
+
+def get_dashboard_metrics():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT merchant_id, revenue, currency,
+               period_start, period_end, pipeline_run_id
+        FROM dashboard_metrics
+        ORDER BY merchant_id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        DashboardMetric(
+            merchant_id=row[0],
+            revenue=Decimal(row[1]),
+            currency=row[2],
+            period_start=datetime.fromisoformat(row[3]),
+            period_end=datetime.fromisoformat(row[4]),
+            pipeline_run_id=row[5]
+        )
+        for row in rows
+    ]
+def get_incidents():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            incident_id,
+            merchant_id,
+            incident_type,
+            expected_revenue,
+            actual_revenue,
+            discrepancy,
+            currency,
+            severity
+        FROM incidents
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    incidents = []
+
+    for row in rows:
+        incidents.append(
+            Incident(
+                incident_id=row[0],
+                merchant_id=row[1],
+                incident_type=row[2],
+                expected_revenue=Decimal(row[3]),
+                actual_revenue=Decimal(row[4]),
+                discrepancy=Decimal(row[5]),
+                currency=row[6],
+                severity=row[7]
+            )
+        )
+
+    return incidents
 
 
 if __name__ == "__main__":
