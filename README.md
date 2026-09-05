@@ -116,7 +116,7 @@ Human approval
 
 **Gemini AI investigator** — receives the structured, scoped evidence and reasons over it to determine the likely root cause, explain its reasoning, assign a confidence level, cite supporting evidence, and propose a bounded corrective action.
 
-**Human approval** — the recommendation is surfaced for a human reviewer to approve or send to manual review. No financial action is executed automatically.
+**Human approval** — the AI recommendation is surfaced to a human reviewer, who can approve the proposed action or route it to manual review. In the current prototype, approval is recorded for the browser session only, and no financial remediation is executed automatically.
 
 ---
 
