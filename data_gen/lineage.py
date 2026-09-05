@@ -19,18 +19,14 @@ from datetime import timedelta
 LOOKBACK_WINDOW = timedelta(days=2)
 
 
-def gather_payments_in_scope(
-    incident,
-    payments,
-    period_start,
-    period_end
-):
+def gather_payments_in_scope(incident, payments, period_start, period_end):
     return [
         payment
         for payment in payments
         if (
             payment.merchant_id == incident.merchant_id
             and payment.currency == incident.currency
+            and payment.status == "completed"
             and period_start - LOOKBACK_WINDOW
             <= payment.timestamp
             <= period_end + LOOKBACK_WINDOW
